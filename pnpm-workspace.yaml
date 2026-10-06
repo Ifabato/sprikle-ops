@@ -1,0 +1,6 @@
+# pnpm 10 blocks dependency lifecycle scripts unless explicitly allowed.
+# unrs-resolver (via eslint-config-next) ships a postinstall that only downloads a
+# native binding when the platform's optional package is missing; the prebuilt
+# binding is installed normally, so the script is intentionally left blocked.
+ignoredBuiltDependencies:
+  - unrs-resolver
