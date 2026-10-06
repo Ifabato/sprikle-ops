@@ -80,6 +80,28 @@ No coverage ignores are used; unreachable defensive branches are reported as unc
 - `tests/unit/domain/enums-sync.test.ts` is the only unit test importing generated Prisma code; the
   domain and validation modules themselves are lint-restricted from server-only imports.
 
+## Authentication tests (Phase 4A)
+
+- `tests/integration/auth.test.ts` drives Better Auth's **HTTP handler** (the same path browsers
+  use) against `sprikle_ops_test`: cookie attributes and 8-hour expiry; identical generic failures
+  (unknown email, wrong password, inactive user); sign-up and the 17 disabled endpoints (404);
+  server-owned fields (disabled update endpoint, smuggled sign-in fields, and Better Auth's
+  update API), each asserting stored values are unchanged; untrusted `Origin` and cross-site
+  Fetch Metadata (403); the login limiter (after 5 allowed sign-in requests, 429, including a correct password; a
+  different isolated test identity is not limited) and
+  that rotating `x-forwarded-for` does not evade it; expired sessions; rolling refresh via the
+  handler but not during server-side reads; deactivation after sign-in; roles; sign-out.
+- `tests/integration/auth-provisioning.test.ts`: credential mapping, repeat runs leave users and
+  password hashes unchanged, short passwords refused, the four demo accounts.
+- Unit: `return-path`, `auth-log` (redaction), `session` (actor mapping, guards, redirect targets).
+- **Rate-limit isolation:** Better Auth's memory store is one process-wide map, so separate auth
+  instances share buckets. Tests give each test its own client identity through a test-only
+  trusted header (`tests/helpers/auth-test.ts`); limits are unchanged. These per-identity buckets
+  exist only in tests: the real handler trusts no client-supplied header and uses one shared bucket,
+  which the `x-forwarded-for` test exercises with the production identity configuration.
+- **No secrets in output:** auth assertions compare booleans and flags, never token, cookie, or
+  hash values, so a failing test cannot print a credential.
+
 ## Test-database safety
 
 Integration tests never touch the development database (`sprikle_ops`):
@@ -91,8 +113,8 @@ Integration tests never touch the development database (`sprikle_ops`):
    connection-redirecting query parameters are present, and the two URLs target different databases.
 2. `pnpm db:test:prepare` applies the same guard, then only runs `prisma migrate deploy`.
 3. Cleanup (`truncateTestDatabase()`) checks `current_database()` on the same transaction
-   immediately before `TRUNCATE`, and truncates an explicit table list (never `_prisma_migrations`,
-   no `CASCADE`).
+   immediately before `TRUNCATE`, and truncates an explicit table list including the Better Auth
+   tables (never `_prisma_migrations`, no `CASCADE`).
 4. Integration files run one at a time (`fileParallelism: false`).
 
 All refusal paths are unit-tested (`tests/unit/database-safety.test.ts`). The localhost restriction is

@@ -35,11 +35,13 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:status": "prisma migrate status",
-    "db:test:prepare": "node scripts/db-test-prepare.ts"
+    "db:test:prepare": "node scripts/db-test-prepare.ts",
+    "db:seed:auth": "node scripts/seed-auth-users.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
+    "better-auth": "1.7.7",
     "next": "16.3.8",
     "pg": "8.23.1",
     "react": "19.3.0",

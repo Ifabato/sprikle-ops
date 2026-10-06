@@ -18,6 +18,27 @@ Phase 4 and in services from Phase 5.
 - **Pure rules are not session checks.** The domain helpers decide what an already-identified actor
   may do; they never verify a session themselves.
 
+## Server-side enforcement (Phase 4A)
+
+- `src/server/session.ts` resolves the actor from the Better Auth session on every request:
+  `getActor()` / `authorize()` (returns `UNAUTHENTICATED` or `FORBIDDEN`), and the page guards
+  `requireUser(returnTo)` (redirects to `/login?next=…`) and `requireRole(role, returnTo)`
+  (redirects when signed out; returns `{ forbidden: true }` for the wrong role so the page renders a
+  forbidden view with HTTP 200, because Next.js only sets a 403 page status through an experimental
+  flag that is not used).
+- Every page and server entry point calls these helpers itself; layouts and the Phase 4B proxy are
+  not relied on.
+- Sessions are read with refresh disabled, so rendering never refreshes or extends a session and
+  never sets cookies. Better Auth may delete an already-expired session row when reading it.
+- **Protected API handlers:** every protected application API route handler (and Server Action)
+  must call `authorize()` or an equivalent server-side checked entry point before doing any work.
+  A response from `/api/auth/get-session` or the presence of a session cookie is not authorization.
+- Inactive users are refused at sign-in (same error as a wrong password) and denied on the next
+  request after deactivation. Unknown or malformed roles fail closed.
+- `?next=` return paths pass through `safeReturnPath()` (`src/lib/return-path.ts`): only
+  `/dashboard`, `/work-orders`, `/analytics`, `/profile` and their subpaths; anything else becomes
+  `/dashboard`.
+
 ## Decision precedence
 
 Every rule entry point checks in this order and returns the first failure, so unauthenticated or

@@ -114,4 +114,10 @@ describe("TRUNCATABLE_TABLES", () => {
   it("never includes Prisma's migration history table", () => {
     expect(TRUNCATABLE_TABLES).not.toContain("_prisma_migrations");
   });
+
+  it("includes the Better Auth tables that reference users", () => {
+    expect(TRUNCATABLE_TABLES).toEqual(
+      expect.arrayContaining(["sessions", "accounts", "verifications", "users"]),
+    );
+  });
 });

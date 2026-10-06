@@ -53,8 +53,8 @@ enum ActivityType {
 }
 
 /// Better Auth core user fields (name, email, emailVerified, image, createdAt, updatedAt)
-/// plus domain fields role and isActive. Better Auth's session/account/verification
-/// tables are added in Phase 4.
+/// plus server-owned domain fields role and isActive (Better Auth additionalFields with
+/// input: false). Sessions and credential accounts are Better Auth tables (Phase 4A).
 model User {
   id            String   @id @default(cuid())
   name          String
@@ -70,9 +70,71 @@ model User {
   createdWorkOrders  WorkOrder[]         @relation("WorkOrderCreator")
   comments           WorkOrderComment[]
   activities         WorkOrderActivity[]
+  sessions           Session[]
+  accounts           Account[]
 
   @@index([role, isActive])
   @@map("users")
+}
+
+// ---------------------------------------------------------------------------
+// Better Auth 1.7.7 tables. Field names match Better Auth's core schema
+// (better-auth core db/get-tables) exactly; the Prisma adapter addresses them by
+// these Prisma names, so the snake_case database mapping is transparent to it.
+// ---------------------------------------------------------------------------
+
+/// Database-backed session. The token is the opaque value carried by the session cookie.
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+  token     String   @unique
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  userId    String   @map("user_id")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+/// Authentication method linked to a user. Email/password sign-in uses
+/// providerId = "credential" with accountId = the user's id; `password` holds the hash.
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id")
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at") @db.Timestamptz(3)
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at") @db.Timestamptz(3)
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+/// Short-lived verification values (unused in the MVP; required by Better Auth's schema).
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime @map("expires_at") @db.Timestamptz(3)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([identifier])
+  @@map("verifications")
 }
 
 model ServiceArea {

@@ -42,6 +42,30 @@ no DELETE endpoint.
 - Work orders are addressed by reference (`WO-000123`) in URLs.
 - Authenticated responses send `Cache-Control: no-store`. The health endpoint also sends `no-store`.
 
+## Authentication endpoints (implemented, Phase 4A)
+
+Better Auth's handler at `/api/auth/*` (`src/app/api/auth/[...all]/route.ts`). Enabled endpoints
+used by the app:
+
+| Method and path                | Purpose                                                                                                                                                                                                                                           |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /api/auth/sign-in/email` | `{ email, password }` → session cookie. Failures: 401 `INVALID_EMAIL_OR_PASSWORD` for unknown email, wrong password, or inactive user (identical); 429 when rate-limited (see below); 403 for an untrusted `Origin` or cross-site Fetch Metadata. |
+| `POST /api/auth/sign-out`      | Deletes the session and clears the cookie (same origin checks).                                                                                                                                                                                   |
+| `GET /api/auth/get-session`    | Current session (refreshes a session older than one hour). Not application authorization: it still returns a deactivated user with `isActive: false`.                                                                                             |
+
+Sign-up and 16 other unused endpoints return 404 (`DISABLED_AUTH_PATHS` in `src/server/auth.ts`).
+
+**Sign-in rate limiting (local-demo configuration, not deployment-ready):** the limiter counts every request to `POST /api/auth/sign-in/email` that reaches the handler (successful, failed, malformed, or later rejected by the origin check) in one bucket shared by all clients. After 5 allowed requests, each less than 60 s after the previous allowed one, further sign-in requests receive 429 until 60 s have passed since the last allowed request; 429 responses are not counted. No client IP
+header is trusted, so client-controlled headers such as `x-forwarded-for` cannot select or bypass
+the bucket, but any client can lock out every sign-in for about a minute. Separate per-client buckets
+exist only in the test setup. A deployment requires an explicitly trusted proxy/IP configuration.
+
+**Authorization of protected handlers:** every protected application API handler must call
+`authorize()` (`src/server/session.ts`) or an equivalent server-side checked entry point. A session
+response or a session cookie alone is not authorization.
+
+Details: [ADR 0002](decisions/0002-authentication-library.md).
+
 ## Health endpoint (implemented)
 
 `GET /api/health` is public and returns:

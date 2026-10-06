@@ -22,6 +22,10 @@ export const TRUNCATABLE_TABLES = [
   "work_order_comments",
   "work_orders",
   "service_areas",
+  // Better Auth tables (Phase 4A). sessions and accounts reference users.
+  "sessions",
+  "accounts",
+  "verifications",
   "users",
 ] as const;
 

@@ -109,6 +109,20 @@ Append-only (trigger). Comments are immutable in the MVP (D13).
 
 Append-only (trigger).
 
+### sessions, accounts, verifications (Better Auth, Phase 4A)
+
+Added by the additive migration `20261006020855_add_auth_tables`; no existing table changed.
+Field names match Better Auth 1.7.7's core schema; columns are snake_case `timestamptz(3)`.
+
+| Table           | Key columns                                                                             | Constraints                                                                             |
+| --------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `sessions`      | `token` (opaque cookie value), `expires_at`, `ip_address`, `user_agent`, `user_id`      | `token` unique; `user_id` indexed, FK → users `ON DELETE CASCADE`                       |
+| `accounts`      | `provider_id`, `account_id`, `password` (hash), OAuth token columns (unused), `user_id` | unique (`provider_id`, `account_id`); `user_id` indexed, FK → users `ON DELETE CASCADE` |
+| `verifications` | `identifier`, `value`, `expires_at`                                                     | `identifier` indexed (unused in the MVP)                                                |
+
+Email/password users have one `accounts` row with `provider_id = 'credential'` and
+`account_id = users.id`. Users are deactivated rather than deleted (domain tables restrict deletes).
+
 ## Constraints added in migration SQL
 
 Prisma's schema language cannot express CHECK constraints, functions, or triggers, so they are

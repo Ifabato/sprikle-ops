@@ -4,22 +4,23 @@ Running checklist and verification record. Each phase is implemented only after 
 
 ## Phase checklist
 
-| #   | Phase                                           | Status                               |
-| --- | ----------------------------------------------- | ------------------------------------ |
-| 0   | Planning package                                | ✅ Approved 2026-10-05               |
-| 1   | Foundation                                      | ✅ Committed `a58aa3d`, pushed       |
-| 2   | Database (Compose, Prisma, schema, constraints) | ✅ Committed `6957fc6`, pushed       |
-| 3   | Domain logic and validation                     | ✅ Committed `b4d6f80`, pushed       |
-| —   | Design setup gate (Impeccable, ADR 0004)        | ✅ Gate B executed — awaiting review |
-| 4   | Authentication and app shell                    | ⏳ Not started                       |
-| 5   | Services, audit trail, seed                     | ⏳ Not started                       |
-| 6   | REST API                                        | ⏳ Not started                       |
-| 7   | CI quality gates                                | ⏳ Not started                       |
-| 8   | Work-order UI                                   | ⏳ Not started                       |
-| 9   | Dashboard                                       | ⏳ Not started                       |
-| 10  | Analytics                                       | ⏳ Not started                       |
-| 11  | E2E and accessibility                           | ⏳ Not started                       |
-| 12  | Documentation and packaging                     | ⏳ Not started                       |
+| #   | Phase                                           | Status                           |
+| --- | ----------------------------------------------- | -------------------------------- |
+| 0   | Planning package                                | ✅ Approved 2026-10-05           |
+| 1   | Foundation                                      | ✅ Committed `a58aa3d`, pushed   |
+| 2   | Database (Compose, Prisma, schema, constraints) | ✅ Committed `6957fc6`, pushed   |
+| 3   | Domain logic and validation                     | ✅ Committed `b4d6f80`, pushed   |
+| —   | Design setup gate (Impeccable, ADR 0004)        | ✅ Committed `856b248`, pushed   |
+| 4A  | Authentication backend                          | ✅ Implemented — awaiting review |
+| 4B  | Styled app shell, browser checks, Impeccable    | ⏳ Not started                   |
+| 5   | Services, audit trail, seed                     | ⏳ Not started                   |
+| 6   | REST API                                        | ⏳ Not started                   |
+| 7   | CI quality gates                                | ⏳ Not started                   |
+| 8   | Work-order UI                                   | ⏳ Not started                   |
+| 9   | Dashboard                                       | ⏳ Not started                   |
+| 10  | Analytics                                       | ⏳ Not started                   |
+| 11  | E2E and accessibility                           | ⏳ Not started                   |
+| 12  | Documentation and packaging                     | ⏳ Not started                   |
 
 ## Approved decisions
 
@@ -340,3 +341,96 @@ Outside the repository: `~/.impeccable/update-check.json` (created by the engine
   2479 bytes; body identical to the submitted source), and `.impeccable/` was added to
   `.prettierignore`. Engine-managed `.impeccable/` files are never reformatted by project tooling;
   they stay exactly as the engine wrote them and as they were reviewed.
+
+---
+
+## Phase 4A — Authentication backend (2026-10-06)
+
+### Scope delivered
+
+- Better Auth 1.7.7 (`src/server/auth.ts`): email/password with public sign-up disabled, 17 unused
+  endpoints disabled, server-owned `role`/`isActive`, database-backed 8-hour rolling sessions
+  (1-hour refresh, cookie cache off), explicit CSRF/origin protection, in-memory login limiter
+  (one shared bucket of 5 sign-in requests; ADR 0002), no trusted client IP headers, telemetry off, sanitized logging, and inactive users
+  refused with the same error as a wrong password. Full rationale: ADR 0002.
+- Server-side guards (`src/server/session.ts`), safe return paths (`src/lib/return-path.ts`), the
+  `/api/auth/*` handler, and an additive migration for `sessions`, `accounts`, `verifications`.
+- Demo-user provisioning (`scripts/lib/auth-users.ts`, `pnpm db:seed:auth`) and
+  `pnpm env:init --add-missing`.
+- Tests: 3 new unit files, 2 new integration files; test cleanup covers the auth tables.
+
+Not included (by design, Phase 4B): `src/proxy.ts`, login page, app shell, styled placeholders,
+Lucide, Playwright, Impeccable. OD-1 and OD-2 remain unresolved.
+
+### Verification results
+
+| Check                                      | Result                                                                                                                                   |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `better-auth@1.7.7` compatibility          | ✅ peers satisfied by Next 16.3.8, React 19.3.0, Prisma 7.10.0, pg 8.23.1, Vitest 5.0.3; one `zod@4.6.5`                                 |
+| `env:init --add-missing`                   | ✅ appended 3 keys (names only shown); existing `.env` bytes unchanged; second run appends nothing                                       |
+| Migration `20261006020855_add_auth_tables` | ✅ generated SQL reviewed (3 new tables, 5 indexes, 2 FKs; no existing table changed); applied to dev and test; no drift or reset prompt |
+| Migration checksums                        | ✅ all 3 migrations match in both databases                                                                                              |
+| `pnpm db:seed:auth` (twice)                | ✅ run 1: 4 created; run 2: 4 unchanged; credential mapping verified; hash fingerprints identical across runs                            |
+| `pnpm test:integration`                    | ✅ 4 files, 45 tests                                                                                                                     |
+| `pnpm check`                               | ✅ format, lint, typecheck, 463 unit tests with coverage (99.28% lines, 98.84% branches) and 3 time-zone runs, build                     |
+| Build with the database stopped            | ✅ exit 0; database restarted and healthy                                                                                                |
+
+Behaviors verified through the HTTP handler: HttpOnly/SameSite=Lax/non-Secure cookie with
+`Max-Age=28800`; identical 401 for unknown email, wrong password, and inactive user; sign-up and
+disabled endpoints 404; smuggled `role`/`isActive` on sign-in ignored (200) with stored values
+unchanged; Better Auth's update API rejects `role` with `FIELD_NOT_ALLOWED`; untrusted `Origin`
+and cross-site Fetch Metadata 403; 6th sign-in in 60 s → 429 (correct password included), other
+isolated test identities limited independently, and with the production identity configuration
+rotating `x-forwarded-for` does not evade the single shared bucket; expired session rejected;
+rolling refresh through the handler but not during server-side reads; deactivation after sign-in
+denied on the next request; role denial; sign-out deletes the session and clears the cookie.
+
+### Issues and deviations
+
+- **`x-forwarded-for` trusted by default:** Better Auth 1.7.7 reads client IP from
+  `x-forwarded-for` unless configured; set `ipAddressHeaders: []` so it cannot be spoofed to evade
+  the limiter. A proxied deployment must configure a trusted header deliberately.
+- **Origin checks skipped in tests by default:** set `disableOriginCheck: false` explicitly.
+- **Rate-limit store is process-wide:** separate auth instances share it, so tests isolate clients
+  through a test-only trusted header rather than weakening limits.
+- **Server-side reads do not refresh sessions** (`disableRefresh`), to avoid writes during
+  rendering; rolling refresh happens through the HTTP handler. Phase 4B must ensure the browser
+  reaches the handler (for example a session check) for sessions to roll in practice.
+- **Raw `get-session` for a deactivated user** returns the session with `isActive: false`; the
+  application refuses it. Session revocation on deactivation is deferred to admin user management.
+- **Forbidden pages return HTTP 200** with a forbidden view (no experimental `authInterrupts`).
+- **Accounts unique (`provider_id`, `account_id`)** was added beyond Better Auth's base schema for
+  integrity.
+- **Typed routes:** the `/login` redirect is cast to `Route` until the page exists in 4B.
+- **`tsx` not needed:** Node 24 type stripping runs the seed script with Prisma's generated client.
+- **Interrupted session:** work paused before the diagnostic, provisioning test, seed, final checks,
+  and documentation; on resumption the state was inspected first and only those remaining steps
+  were completed (the migration was not re-run). Temporary diagnostic tests were deleted after
+  recording their results.
+
+### Pre-commit review findings (resolved, documentation and comments only)
+
+The Phase 4A pre-commit review found two inaccurate claims; both were corrected without changing
+runtime behavior:
+
+1. **Rate-limit identity.** Earlier wording said "per client" and "other clients unaffected." In the
+   pinned Better Auth 1.7.7 limiter, every request to `POST /api/auth/sign-in/email` that reaches the
+   handler counts (successful, failed, malformed, or later rejected by the origin check); after 5
+   allowed requests, each less than 60 s after the previous allowed one, further requests receive
+   429 until 60 s pass since the last allowed request (429 responses are not counted). With no
+   trusted IP header, all clients share one bucket (`127.0.0.1` in development and test; Better
+   Auth's shared fallback key in production), so client headers cannot bypass it but anyone can
+   lock out every sign-in for about a minute. Documented as a local-demo limitation, not
+   deployment-ready; separate buckets exist only in the isolated test setup. Corrected in
+   `src/server/auth.ts`, ADR 0002, `docs/api.md`, `docs/test-strategy.md`, this log, and two test
+   titles/comments in `tests/integration/auth.test.ts`.
+2. **Rendering writes.** Earlier wording said rendering "never writes sessions." Server-side reads
+   never refresh or extend a session and never set cookies, but Better Auth may delete an
+   already-expired session row when reading it. Corrected in `src/server/session.ts`,
+   `docs/authorization.md`, and ADR 0002.
+
+Also documented: every protected application API handler must call `authorize()` or an equivalent
+server-side checked entry point; a session response or cookie alone is not authorization.
+
+Deferred (not done): a test for expired-row deletion, file-backed verification reruns, Better
+Auth's deferred-refresh option, and removal of two non-sensitive Phase 2 logs in `/tmp`.

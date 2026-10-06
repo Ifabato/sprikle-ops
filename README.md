@@ -5,8 +5,9 @@ businesses. It gives an operations manager one accountable system for tracking w
 assigning work, monitoring service execution, spotting risk (overdue, blocked, and high-priority
 work), and measuring performance with data rather than guesswork.
 
-> **Status: work in progress.** Phases 1–2 (foundation and database) are complete.
-> Authentication, work orders, the dashboard, and analytics are added in later phases. See
+> **Status: work in progress.** Phases 1–3, the design context, and the authentication backend
+> (Phase 4A) are complete. The app shell, work orders, the dashboard, and analytics are added in
+> later phases. See
 > [docs/implementation-log.md](docs/implementation-log.md) for progress and verification results.
 
 ## Prerequisites (macOS)
@@ -17,13 +18,16 @@ work), and measuring performance with data rather than guesswork.
 
 ## Local setup (work in progress)
 
-These steps cover the foundation and database; sign-in setup will be added in Phase 4.
+These steps cover the foundation, database, and authentication backend; the sign-in page and app
+shell arrive in Phase 4B.
 
 ```bash
 pnpm install --frozen-lockfile   # also generates the Prisma client
 pnpm env:init                    # creates .env with a random local DB password; never overwrites
 pnpm db:up                       # starts PostgreSQL on 127.0.0.1 and waits until healthy
+pnpm env:init --add-missing      # appends new keys (auth secret, demo password) to an existing .env
 pnpm db:migrate                  # applies migrations to the development database
+pnpm db:seed:auth                # creates the demo accounts below (existing accounts are left unchanged)
 pnpm dev                         # http://localhost:3000 (keep running; use a second terminal below)
 curl http://localhost:3000/api/health
 ```
@@ -45,6 +49,21 @@ shell. Stop the database with `pnpm db:stop` (data is kept). Do not use `docker 
 which deletes the data volume. If the data volume existed before the test database was introduced,
 create it once with
 `docker compose exec db sh -c 'createdb -U "$POSTGRES_USER" sprikle_ops_test'`.
+
+## Demo accounts (local only)
+
+`pnpm db:seed:auth` creates these synthetic accounts in the local development database:
+
+| Email                   | Role        | Status                        |
+| ----------------------- | ----------- | ----------------------------- |
+| `admin@sprikle.test`    | Admin       | active                        |
+| `tech.one@sprikle.test` | Team member | active                        |
+| `tech.two@sprikle.test` | Team member | active                        |
+| `inactive@sprikle.test` | Team member | inactive (sign-in is refused) |
+
+They share one password, generated into your ignored `.env` as `SEED_DEMO_PASSWORD`; it is never
+committed. View it locally with `grep '^SEED_DEMO_PASSWORD=' .env`. The sign-in page arrives in
+Phase 4B.
 
 ## Documentation
 

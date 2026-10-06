@@ -14,6 +14,8 @@ async function loadRoute() {
 
 describe("GET /api/health", () => {
   beforeEach(() => {
+    vi.stubEnv("BETTER_AUTH_SECRET", "unit-test-placeholder-secret-0123456789abcdef");
+    vi.stubEnv("BETTER_AUTH_URL", "http://localhost:3000");
     vi.useFakeTimers();
     vi.setSystemTime(FIXED_NOW);
     checkDatabase.mockReset();
