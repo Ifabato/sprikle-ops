@@ -6,3 +6,5 @@ node_modules/
 pnpm-lock.yaml
 next-env.d.ts
 src/generated/
+# Impeccable engine-managed files: kept byte-for-byte as the engine wrote and the user reviewed them.
+.impeccable/

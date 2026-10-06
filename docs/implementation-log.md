@@ -4,22 +4,22 @@ Running checklist and verification record. Each phase is implemented only after 
 
 ## Phase checklist
 
-| #   | Phase                                           | Status                           |
-| --- | ----------------------------------------------- | -------------------------------- |
-| 0   | Planning package                                | ✅ Approved 2026-10-05           |
-| 1   | Foundation                                      | ✅ Committed `a58aa3d`, pushed   |
-| 2   | Database (Compose, Prisma, schema, constraints) | ✅ Committed `6957fc6`, pushed   |
-| 3   | Domain logic and validation                     | ✅ Implemented — awaiting review |
-| —   | Design setup gate (Impeccable, ADR 0004)        | ⏳ Not started (approval needed) |
-| 4   | Authentication and app shell                    | ⏳ Not started                   |
-| 5   | Services, audit trail, seed                     | ⏳ Not started                   |
-| 6   | REST API                                        | ⏳ Not started                   |
-| 7   | CI quality gates                                | ⏳ Not started                   |
-| 8   | Work-order UI                                   | ⏳ Not started                   |
-| 9   | Dashboard                                       | ⏳ Not started                   |
-| 10  | Analytics                                       | ⏳ Not started                   |
-| 11  | E2E and accessibility                           | ⏳ Not started                   |
-| 12  | Documentation and packaging                     | ⏳ Not started                   |
+| #   | Phase                                           | Status                               |
+| --- | ----------------------------------------------- | ------------------------------------ |
+| 0   | Planning package                                | ✅ Approved 2026-10-05               |
+| 1   | Foundation                                      | ✅ Committed `a58aa3d`, pushed       |
+| 2   | Database (Compose, Prisma, schema, constraints) | ✅ Committed `6957fc6`, pushed       |
+| 3   | Domain logic and validation                     | ✅ Committed `b4d6f80`, pushed       |
+| —   | Design setup gate (Impeccable, ADR 0004)        | ✅ Gate B executed — awaiting review |
+| 4   | Authentication and app shell                    | ⏳ Not started                       |
+| 5   | Services, audit trail, seed                     | ⏳ Not started                       |
+| 6   | REST API                                        | ⏳ Not started                       |
+| 7   | CI quality gates                                | ⏳ Not started                       |
+| 8   | Work-order UI                                   | ⏳ Not started                       |
+| 9   | Dashboard                                       | ⏳ Not started                       |
+| 10  | Analytics                                       | ⏳ Not started                       |
+| 11  | E2E and accessibility                           | ⏳ Not started                       |
+| 12  | Documentation and packaging                     | ⏳ Not started                       |
 
 ## Approved decisions
 
@@ -284,3 +284,59 @@ ignores were added.
   Prettier re-padded it, so it silently did nothing. The section (OD-1 terminal-work edits, OD-2
   completion-rate cohort link) was added with a direct edit and verified by reading it back.
   Lesson: verify scripted documentation edits by reading the result, not by assuming a match.
+
+---
+
+## Design setup — Gates A and B (2026-10-05)
+
+### Scope delivered
+
+- Gate A approved: Direction A "Dispatch board" (pinned; no `concept-seed`), Operate mode, light
+  theme, system fonts, code-led, `lucide-react` intended for Phase 4 (not installed), text-only
+  decision channel, no choice ping.
+- Gate B: plugin and engine versions verified, plugin flag enabled, Impeccable `context` run,
+  `init` → `PRODUCT.md`, `shape app-shell` brief, pinned direction contract recorded with
+  `surface-brief`, generated files inspected.
+- Details, commands, and observed network behavior: [ADR 0004](decisions/0004-design-workflow.md).
+
+Not included (by design): DESIGN.md (written from the built interface at the end of Phase 4),
+Tailwind tokens, application or UI code, dependency installation, concept-seed, decision pages,
+image generation, live mode.
+
+### Files
+
+Created: `PRODUCT.md`, `docs/design/visual-direction.md`, and (written by the engine)
+`.impeccable/surfaces/src-app-app-layout-tsx.md`.
+Modified: `.gitignore`, `.prettierignore`, `docs/decisions/0004-design-workflow.md`, `docs/implementation-log.md`.
+`.gitignore` ignores all `.impeccable/` content except the inspected surface brief (approved after
+the read-only review); verified with `git check-ignore` against representative config, design,
+cache, review, screenshot, build, mock, critique, live, and log paths.
+Ignored, in the repository: `.claude/settings.local.json` (plugin flag; set to `true` during Gate B,
+`false` after the user disabled the plugin and reloaded).
+Outside the repository: `~/.impeccable/update-check.json` (created by the engine's update check).
+
+### Observations and deviations
+
+- **Hooks:** the plugin flag was enabled, but hooks were not loaded during Gate B because no plugin
+  reload occurred; no hook ran (engine reported `MANUAL_DETECTOR_REQUIRED`; the session's hook
+  records show none). The user later disabled the plugin and reloaded (0 hooks).
+- **Shape confirmation:** the shape brief was saved as the surface brief without a separate
+  confirmation round; the user then reviewed it read-only against Direction A (no material
+  additions) and approved its `.gitignore` exception.
+- **Network:** `impeccable context` opened one outbound HTTPS connection (TCP 443, Cloudflare IPv6
+  range) and wrote `~/.impeccable/update-check.json` (`latestVersion: 4.5.0`); most likely the skill
+  update check. The payload and complete network behavior were not determined. The surface-brief
+  commands showed no sockets, but observation was 50 ms socket polling, which can miss short
+  connections; absence of observed sockets is not proof of no traffic.
+- **Opt-out variables:** `DO_NOT_TRACK=1` and `IMPECCABLE_NO_TELEMETRY=1` were set for every engine
+  command after `context`, but not for `context` itself. Future engine commands receive both from
+  the first invocation; they are documented as skipping the choice ping and are not claimed to block
+  all network access.
+- **Incumbent visual:** the engine classifies the Phase 1 placeholder page as an incumbent visual
+  implementation; the pinned direction replaces it in Phase 4.
+- **Formatting policy for engine-managed files:** after the `.gitignore` exception un-ignored the
+  surface brief, `pnpm format` (Prettier skips only Git-ignored files) added four blank lines to it.
+  The brief was restored byte-for-byte from the engine's saved read-back (verified with `cmp`;
+  2479 bytes; body identical to the submitted source), and `.impeccable/` was added to
+  `.prettierignore`. Engine-managed `.impeccable/` files are never reformatted by project tooling;
+  they stay exactly as the engine wrote them and as they were reviewed.

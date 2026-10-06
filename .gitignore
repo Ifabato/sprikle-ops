@@ -34,3 +34,11 @@ pnpm-debug.log*
 
 # generated Prisma client
 src/generated/
+
+# Impeccable design tooling: everything is ignored by default. Exceptions are added only after
+# each file has been inspected and the exception approved (see docs/decisions/0004-design-workflow.md).
+# Approved exception: the inspected app-shell surface brief (design strategy only).
+.impeccable/*
+!.impeccable/surfaces/
+.impeccable/surfaces/*
+!.impeccable/surfaces/src-app-app-layout-tsx.md
