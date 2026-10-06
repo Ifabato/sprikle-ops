@@ -1,6 +1,6 @@
 # Test Strategy
 
-Status: **Updated in Phase 2.** Expanded as each layer is introduced.
+Status: **Updated in Phase 3.** Expanded as each layer is introduced.
 
 ## Goals
 
@@ -51,6 +51,35 @@ status transition (422), stale version (409).
 | `pnpm check:full`       | `check` plus `test:integration`                           | yes            | Phase 2        |
 | `pnpm test:e2e`         | Playwright suite                                          | yes            | Phase 11       |
 
+## Coverage (Phase 3)
+
+`pnpm test:coverage` measures every file under `src/domain/` and `src/validation/` (including files
+no test imports) and fails below these thresholds:
+
+| Scope                       | Lines | Statements | Functions | Branches |
+| --------------------------- | ----- | ---------- | --------- | -------- |
+| `src/domain/**`             | 90    | 90         | 90        | 85       |
+| `src/domain/transitions.ts` | –     | –          | –         | 95       |
+| `src/domain/permissions.ts` | –     | –          | –         | 95       |
+| `src/validation/**`         | 90    | 90         | –         | –        |
+
+No coverage ignores are used; unreachable defensive branches are reported as uncovered (ADR 0005).
+
+## Domain and validation rules (Phase 3)
+
+- Table-driven: all 25 status pairs × admin, assigned team member, out-of-scope team member,
+  unassigned work, and unauthenticated/inactive actors; every permission action × actor kind.
+- Precedence: unauthenticated and out-of-scope callers never receive `NO_CHANGE`,
+  `INVALID_TRANSITION`, or `VERSION_CONFLICT`.
+- Dates: ±1 ms boundaries, DST days and weeks (2024, 2026, 2027), leap day, year-end ISO weeks,
+  repeated autumn hour, and independence from the process `TZ`.
+- Metrics: empty datasets, zero denominators, cancelled/restored/reopened work, future-dated
+  records, negative or non-finite durations, deterministic Needs Attention ties.
+- Validation: strict objects (unknown fields rejected), trimming, every length limit, enums, real
+  calendar dates, version range, list-query defaults, repeated parameters, and unknown parameters.
+- `tests/unit/domain/enums-sync.test.ts` is the only unit test importing generated Prisma code; the
+  domain and validation modules themselves are lint-restricted from server-only imports.
+
 ## Test-database safety
 
 Integration tests never touch the development database (`sprikle_ops`):
@@ -69,9 +98,10 @@ Integration tests never touch the development database (`sprikle_ops`):
 All refusal paths are unit-tested (`tests/unit/database-safety.test.ts`). The localhost restriction is
 deliberate; CI (Phase 7) will need its own explicit, trusted database-host configuration.
 
-## Current coverage (Phase 2)
+## Current coverage (Phase 2–3)
 
-Unit (no database):
+Unit (no database), Phase 3: 13 new files under `tests/unit/domain/` and `tests/unit/validation/`
+(see above). Phase 2:
 
 - `tests/unit/env.test.ts`: defaults, time-zone and `DATABASE_URL` validation, errors never echo values.
 - `tests/unit/health-route.test.ts`: 200 when healthy; 503 when the database is unavailable; 503 with

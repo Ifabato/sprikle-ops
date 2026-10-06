@@ -57,10 +57,11 @@ Permissions: see [authorization.md](authorization.md).
 
 1. Automated accessibility checks (`@axe-core/playwright`).
 2. Playwright E2E as a separate CI job.
-3. Required note when moving work to `BLOCKED` (stored as comment + activity).
+3. ~~Required note when moving work to `BLOCKED`~~ — promoted to must-have in Phase 3 (Q1).
 4. Median time to completion; on-time completion rate.
 5. Trigram index for search with a documented `EXPLAIN ANALYZE` comparison on a 5k-row seed.
-6. Created-date range filter.
+6. Created-date range filter (deferred; also required to link the completion-rate KPI to its
+   cohort — see [metrics.md](metrics.md)).
 7. Password change on profile.
 8. Production `Dockerfile`.
 9. CSV export of the filtered list.
@@ -73,15 +74,47 @@ time-in-status analytics, keyset pagination, deployment.
 
 ## 5. Approved product decisions
 
-| ID  | Decision                                                                                                                                                          |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| D3  | `TEAM_MEMBER` users view and act only on work **currently** assigned to them. Out-of-scope work-order URLs return **404**.                                        |
-| D4  | Analytics are `ADMIN`-only. Team members get a personal, work-focused dashboard.                                                                                  |
-| D5  | Service areas are a seeded `ServiceArea` table, not an enum (business data; adding one must not need a migration). No management UI in the MVP.                   |
-| D6  | Description and due date are required. Assignee is optional for `OPEN` and required for `IN_PROGRESS`, `BLOCKED`, `COMPLETED`. A due date may not be in the past. |
-| D7  | `APP_TIMEZONE=America/New_York`. A date-only due date means the end of that date in that time zone. Timestamps are stored in UTC.                                 |
-| D8  | State-transition matrix ([authorization.md](authorization.md)), derived overdue logic, and metric definitions ([metrics.md](metrics.md)).                         |
-| D13 | Single organization. Comments are immutable. Optimistic concurrency is a must-have. Demo accounts use `@sprikle.test` with password from `SEED_DEMO_PASSWORD`.    |
+| ID  | Decision                                                                                                                                                                                                |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D3  | `TEAM_MEMBER` users view and act only on work **currently** assigned to them. Out-of-scope work-order URLs return **404**.                                                                              |
+| D4  | Analytics are `ADMIN`-only. Team members get a personal, work-focused dashboard.                                                                                                                        |
+| D5  | Service areas are a seeded `ServiceArea` table, not an enum (business data; adding one must not need a migration). No management UI in the MVP.                                                         |
+| D6  | Description and due date are required. Assignee is optional for `OPEN` and required for `IN_PROGRESS`, `BLOCKED`, `COMPLETED`. A due date may not be in the past.                                       |
+| D7  | `APP_TIMEZONE=America/New_York` (the only supported value in the MVP; others are rejected at startup). A date-only due date means the end of that date in that time zone. Timestamps are stored in UTC. |
+| D8  | State-transition matrix ([authorization.md](authorization.md)), derived overdue logic, and metric definitions ([metrics.md](metrics.md)).                                                               |
+| D13 | Single organization. Comments are immutable. Optimistic concurrency is a must-have. Demo accounts use `@sprikle.test` with password from `SEED_DEMO_PASSWORD`.                                          |
+
+### Phase 3 rule decisions (Q1–Q17, approved 2026-10-05)
+
+| ID  | Decision                                                                                                                                                       |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q1  | Entering `BLOCKED` requires a note; entering `CANCELLED` requires a reason (both stored as comments).                                                          |
+| Q2  | A transition to the current status is rejected as `NO_CHANGE` (HTTP 422).                                                                                      |
+| Q3  | Any **active** user, including an `ADMIN`, may be assigned work.                                                                                               |
+| Q4  | A signed-in but inactive actor is treated as unauthenticated.                                                                                                  |
+| Q5  | Due-date input is date-only (`YYYY-MM-DD`); no time of day in the MVP.                                                                                         |
+| Q6  | "Not in the past" applies only when the due date **changes**; an unchanged past due date is preserved during unrelated edits, and overdue work stays editable. |
+| Q7  | `due=week` = today through today + 6 local calendar days, excluding overdue. UI label: **"Due in 7 days"** (never "Due this week").                            |
+| Q8  | Due today = active, not overdue, due on today's local date.                                                                                                    |
+| Q9  | Reporting windows use New York calendar boundaries (see [metrics.md](metrics.md)).                                                                             |
+| Q10 | Metrics use current work-order records, not lifetime completion-event counts; reconciliation compares each record with its latest status event.                |
+| Q11 | Needs Attention ranks by the first matching category, then `dueAt`, then work-order number.                                                                    |
+| Q12 | The pure edit-diff helper is part of the domain layer.                                                                                                         |
+| Q13 | `pnpm check` enforces coverage thresholds.                                                                                                                     |
+| Q14 | Unknown API list-query parameters are rejected (400).                                                                                                          |
+| Q15 | The created-date range filter is deferred.                                                                                                                     |
+| Q16 | Admin quick close (`OPEN → COMPLETED`) requires an existing assignee.                                                                                          |
+| Q17 | Team members acting on work not currently assigned to them always receive `NOT_FOUND`.                                                                         |
+
+### Open product decisions
+
+- **OD-1 — Editing `COMPLETED` or `CANCELLED` work.** Whether admins may edit completed or cancelled
+  work is **unresolved and will be decided in Phase 5**. The current pure rules
+  (`src/domain/work-order-edit.ts`) allow these edits, with unassigning restricted to `OPEN` work.
+  This behavior is **not an approved permanent product policy**.
+- **OD-2 — Completion-rate cohort link.** The completion-rate card's link to its eligible cohort
+  requires the deferred created-date filter (Q15). Do not implement the link or the filter until
+  that dependency is resolved in an approved phase (see [metrics.md](metrics.md)).
 
 ## 6. Non-functional requirements
 
@@ -130,9 +163,10 @@ IDs are referenced by tests (see [test-strategy.md](test-strategy.md)).
 **AC-4 Status transitions**
 
 - Only transitions in the matrix are allowed; the UI shows only allowed actions; the server rejects
-  others with 422 `INVALID_TRANSITION`.
+  others with 422 `INVALID_TRANSITION`, and a transition to the current status with 422 `NO_CHANGE`.
 - Entering `COMPLETED` sets `completedAt`; leaving it clears `completedAt`.
-- Cancelling requires a confirmation dialog and a reason; sets `cancelledAt`.
+- Cancelling requires a confirmation dialog and a reason; sets `cancelledAt`. Restoring clears it.
+- Moving to `BLOCKED` requires a note explaining the block.
 - `IN_PROGRESS`, `BLOCKED`, and `COMPLETED` require an assignee.
 
 **AC-5 Team member works an assignment**
@@ -153,12 +187,17 @@ IDs are referenced by tests (see [test-strategy.md](test-strategy.md)).
 - Default: active work, sorted by due date ascending, 25 per page.
 - All filters, sort, search, and page are reflected in the URL.
 - Search matches `WO-000123`, `123`, and title/description text, case-insensitively.
+- Due filters: "Overdue", "Due today", and "Due in 7 days" (today through today + 6, local dates).
 - "No work orders yet" and "No matches for these filters" are distinct empty states; the latter offers
   "Clear filters".
 
 **AC-8 Dashboard**
 
-- Each KPI count equals the total of the filtered list it links to.
+- Each **count** KPI card (Open, In progress, Blocked, Overdue, High priority) equals the total of
+  the filtered list it links to.
+- The completion-rate card is a percentage, not a count: its link shows the eligible cohort (work
+  created in the window) and explains the numerator and denominator. That link needs the
+  created-date filter, which is deferred to a later phase.
 - Needs Attention shows at most 10 items, ordered per [metrics.md](metrics.md).
 - Shows an "as of" time. Team members see their own scope only.
 

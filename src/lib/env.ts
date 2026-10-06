@@ -1,13 +1,5 @@
 import { z } from "zod";
-
-function isValidTimeZone(value: string): boolean {
-  try {
-    new Intl.DateTimeFormat("en-US", { timeZone: value });
-    return true;
-  } catch {
-    return false;
-  }
-}
+import { APP_TIME_ZONE, isSupportedTimeZone, SUPPORTED_TIME_ZONES } from "@/domain/time";
 
 /**
  * Server-side environment schema. New variables (DATABASE_URL, auth secrets, ...)
@@ -16,12 +8,15 @@ function isValidTimeZone(value: string): boolean {
  */
 export const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  // The MVP's date rules are implemented and tested for America/New_York only (ADR 0005), so any
+  // other zone is a configuration error rather than silently wrong dates.
   APP_TIMEZONE: z
     .string()
     .trim()
-    .min(1)
-    .refine(isValidTimeZone, { message: "must be a valid IANA time zone, e.g. America/New_York" })
-    .default("America/New_York"),
+    .refine(isSupportedTimeZone, {
+      message: `must be ${SUPPORTED_TIME_ZONES.join(" or ")} (the only supported time zone)`,
+    })
+    .default(APP_TIME_ZONE),
   DATABASE_URL: z.url({
     protocol: /^postgres(ql)?$/,
     error: "must be a postgresql:// connection URL",

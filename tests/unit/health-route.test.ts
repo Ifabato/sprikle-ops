@@ -80,4 +80,23 @@ describe("GET /api/health", () => {
     expect(serialized).not.toContain("Not/A_Zone");
     expect(serialized).not.toContain("placeholder");
   });
+
+  it("treats a valid but unsupported time zone as invalid configuration (ADR 0005)", async () => {
+    vi.stubEnv("APP_TIMEZONE", "Europe/London");
+    vi.stubEnv("DATABASE_URL", DATABASE_URL);
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { GET } = await loadRoute();
+
+    const response = await GET();
+    const body = await response.json();
+
+    expect(consoleError).toHaveBeenCalledOnce();
+    expect(checkDatabase).not.toHaveBeenCalled();
+    expect(response.status).toBe(503);
+    expect(body).toMatchObject({
+      status: "error",
+      checks: { config: "invalid", database: "skipped" },
+    });
+    expect(JSON.stringify(body)).not.toContain("Europe/London");
+  });
 });

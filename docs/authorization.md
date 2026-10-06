@@ -1,6 +1,8 @@
 # Authorization
 
-Status: **Approved design.** Enforced from Phase 4 (session) and Phase 5 (service layer).
+Status: **Approved design.** Pure rules implemented in Phase 3 (`src/domain/permissions.ts`,
+`src/domain/transitions.ts`, `src/domain/work-order-edit.ts`); enforced with real sessions from
+Phase 4 and in services from Phase 5.
 
 ## Principles
 
@@ -12,6 +14,28 @@ Status: **Approved design.** Enforced from Phase 4 (session) and Phase 5 (servic
   assigned to them receives **404**, not 403, so references cannot be enumerated (D3).
 - **Role-aware UI is a convenience, not a control.** Hidden buttons are always backed by server checks.
 - Signed-out requests: pages redirect to `/login?next=…`; API calls return `401 UNAUTHENTICATED`.
+- **Inactive actors are unauthenticated** (Q4), even if they still hold a session.
+- **Pure rules are not session checks.** The domain helpers decide what an already-identified actor
+  may do; they never verify a session themselves.
+
+## Decision precedence
+
+Every rule entry point checks in this order and returns the first failure, so unauthenticated or
+out-of-scope callers learn nothing about a work order:
+
+1. `UNAUTHENTICATED` — missing or inactive actor.
+2. `NOT_FOUND` — team member and the work order is not **currently** assigned to them (Q17),
+   regardless of the action requested.
+3. `VERSION_CONFLICT` (transitions and edits) — stale `version`.
+4. Transitions only: `NO_CHANGE` (same status) → `INVALID_TRANSITION` (✗ for everyone) →
+   `FORBIDDEN` (allowed only for `ADMIN`) → `ASSIGNEE_REQUIRED` → `NOTE_REQUIRED` /
+   `NOTE_TOO_LONG` → `CLOCK_SKEW` → `VERSION_LIMIT`.
+5. Edits only: `FORBIDDEN` (team members cannot edit or assign) precedes the version check; field
+   rules (`INVALID_DUE_DATE`, `DUE_DATE_IN_PAST`, `UNASSIGN_NOT_ALLOWED`, `ASSIGNEE_NOT_FOUND`,
+   `ASSIGNEE_INACTIVE`) follow; an edit with no normalized change returns "unchanged" and requests
+   no version increment; `VERSION_LIMIT` applies only to real changes. Whether terminal
+   (`COMPLETED`/`CANCELLED`) work may be edited is an **open product decision** (OD-1 in
+   [product-requirements.md](product-requirements.md)); the pure rules currently allow it.
 
 ## Permission matrix
 
@@ -50,7 +74,10 @@ Status: **Approved design.** Enforced from Phase 4 (session) and Phase 5 (servic
 - Entering `COMPLETED` sets `completedAt = now`; leaving it (reopen) clears `completedAt`.
 - Entering `CANCELLED` requires a reason (stored as a comment) and sets `cancelledAt = now`;
   restoring clears `cancelledAt`.
-- Entering `BLOCKED` requires a note (should-have #3; stored as a comment).
+- Entering `BLOCKED` requires a note (Q1; stored as a comment). Notes and reasons are 1–2000
+  characters after trimming; any transition may carry an optional note.
+- A transition to the current status is rejected as `NO_CHANGE` (Q2).
+- Admin quick close (`OPEN → COMPLETED`) needs an assignee already set (Q16).
 - Unassigning is only allowed while the work order is `OPEN`.
 - Every transition writes a `STATUS_CHANGED` activity with `fromStatus` / `toStatus` and increments
   `version`.

@@ -8,8 +8,8 @@ Running checklist and verification record. Each phase is implemented only after 
 | --- | ----------------------------------------------- | -------------------------------- |
 | 0   | Planning package                                | ✅ Approved 2026-10-05           |
 | 1   | Foundation                                      | ✅ Committed `a58aa3d`, pushed   |
-| 2   | Database (Compose, Prisma, schema, constraints) | ✅ Implemented — awaiting review |
-| 3   | Domain logic and validation                     | ⏳ Not started                   |
+| 2   | Database (Compose, Prisma, schema, constraints) | ✅ Committed `6957fc6`, pushed   |
+| 3   | Domain logic and validation                     | ✅ Implemented — awaiting review |
 | —   | Design setup gate (Impeccable, ADR 0004)        | ⏳ Not started (approval needed) |
 | 4   | Authentication and app shell                    | ⏳ Not started                   |
 | 5   | Services, audit trail, seed                     | ⏳ Not started                   |
@@ -28,6 +28,10 @@ D1–D13 approved on 2026-10-05; recorded in
 [ADR 0001](decisions/0001-stack-and-tooling.md), and [ADR 0002](decisions/0002-authentication-library.md).
 Login rate limiting: Better Auth's built-in in-memory limiter, documented in ADR 0002 (no Redis or
 extra infrastructure).
+
+Q1–Q17 (Phase 3) approved on 2026-10-05; recorded in
+[product-requirements.md](product-requirements.md#phase-3-rule-decisions-q1q17-approved-2026-10-05)
+and [ADR 0005](decisions/0005-time-zones-and-dates.md).
 
 P1–P8 (Phase 2) approved on 2026-10-05; recorded in [ADR 0003](decisions/0003-database-and-prisma.md)
 and [ADR 0004](decisions/0004-design-workflow.md).
@@ -184,3 +188,99 @@ Local, gitignored: `.env` (mode 0600), `src/generated/prisma/`.
   implementation.
 - Better Auth depends on `@better-auth/telemetry`; its default must be checked and telemetry
   disabled explicitly in Phase 4.
+
+---
+
+## Phase 3 — Domain logic and validation (2026-10-05)
+
+### Scope delivered
+
+- Pure, deterministic domain rules in `src/domain/` (no database, clock reads, Node, framework, or
+  Prisma imports; enforced by ESLint):
+  - `enums.ts`, `limits.ts`, `result.ts` — shared constants and the `RuleResult` type.
+  - `time.ts` — `America/New_York` calendar helpers on `Intl` (ADR 0005).
+  - `due-dates.ts` — end-of-day due dates, overdue, "Due today", "Due in 7 days", due-date rule.
+  - `reference.ts` — `WO-000123` format/parse and numeric search terms.
+  - `permissions.ts` — actor/action/scope decisions with UNAUTHENTICATED → NOT_FOUND → FORBIDDEN
+    precedence; assignee eligibility.
+  - `transitions.ts` — the approved matrix, preconditions, and a pure transition plan.
+  - `work-order-edit.ts` — pure edit diff with normalized "no changes" detection.
+  - `metrics.ts` — reporting intervals, ISO-week buckets, completion rate, average completion time,
+    Needs Attention ranking, record/event reconciliation.
+- Client-safe strict Zod schemas in `src/validation/` (create, edit, transition, comment, reference
+  parameter, list query).
+- Coverage provider, thresholds, multi-time-zone runs, and lint restrictions; `pnpm check` now
+  enforces coverage.
+- Docs: metrics clarifications and AC-8 correction, Q1–Q17 decisions, authorization precedence, API
+  list-query rules, test strategy, ADR 0005.
+
+Not included (by design): services, database queries, authentication, API handlers, UI, the
+created-date filter, schema or migration changes.
+
+### Files
+
+Created (28): `docs/decisions/0005-time-zones-and-dates.md`; `src/domain/{enums,limits,result,time,
+due-dates,reference,permissions,transitions,work-order-edit,metrics}.ts`;
+`src/validation/{common,work-order,comment,work-order-list-query}.ts`;
+`tests/unit/domain/{time,process-timezone,due-dates,reference,permissions,transitions,
+work-order-edit,metrics,enums-sync}.test.ts`;
+`tests/unit/validation/{common,work-order,comment,work-order-list-query}.test.ts`.
+
+Modified (14): `package.json`, `pnpm-lock.yaml`, `vitest.config.ts`, `eslint.config.mjs`,
+`.env.example`, `src/lib/env.ts`, `tests/unit/env.test.ts`, `tests/unit/health-route.test.ts`
+(the last four for the approved `APP_TIMEZONE` correction),
+`docs/{metrics,product-requirements,authorization,api,test-strategy,implementation-log}.md`.
+
+Dependency added: `@vitest/coverage-v8` 5.0.3 (dev; peer `vitest` 5.0.3 verified against the
+installed 5.0.3 before installing; no install scripts). The lockfile re-keyed 8 existing entries
+for new optional peers (`magicast`) without changing any versions.
+
+### Verification results
+
+| Check                                                       | Result                                                        |
+| ----------------------------------------------------------- | ------------------------------------------------------------- |
+| `pnpm test` (unit)                                          | ✅ 17 files, 402 tests (incl. 6 for APP_TIMEZONE)             |
+| `pnpm test:coverage`                                        | ✅ thresholds met — see coverage below                        |
+| `pnpm test:timezones` (UTC, America/New_York, Asia/Kolkata) | ✅ 402/402 in each                                            |
+| `pnpm format:check`, `pnpm lint`, `pnpm typecheck`          | ✅                                                            |
+| Lint restriction probe (stdin, no file written)             | ✅ 7/7 violations reported; `getUTCHours()` allowed           |
+| `pnpm build`                                                | ✅                                                            |
+| `pnpm check` (all of the above)                             | ✅                                                            |
+| `pnpm test:integration` (guarded)                           | ✅ 2 files, 23 tests; no pending migrations; dev DB untouched |
+
+Coverage (v8, all 14 domain/validation files reported):
+
+| File                  | Lines | Branches | Functions |
+| --------------------- | ----- | -------- | --------- |
+| All files             | 99.28 | 98.84    | 100       |
+| `src/domain/time.ts`  | 96.10 | 93.44    | 100       |
+| every other file (13) | 100   | 100      | 100       |
+
+Uncovered: `time.ts` lines 189, 232, 243 — defensive branches unreachable with `America/New_York`
+(incomplete `Intl` parts, second-pass offset correction, nonexistent local midnight). No coverage
+ignores were added.
+
+### Issues and deviations
+
+- **`limits.ts`** was added (not in the proposal's file list) to share text, pagination, and
+  integer limits between domain rules and schemas.
+- **Simplifications during implementation:** transition timestamps follow the database invariant
+  directly (stamp when entering, otherwise null); `countByBucket` was rewritten to remove an
+  unreachable fallback branch.
+- **Test-helper bug fixed:** a default parameter turned an intended "no note" into a note; the
+  helper now uses `null` for "no note".
+- **`APP_TIMEZONE` correction (approved before commit):** configuration validation now accepts only
+  `America/New_York`; any other zone (including valid IANA zones) makes `/api/health` return 503
+  `config: "invalid"` with the database check skipped and no value echoed. Env and health tests
+  updated; the custom date implementation was not broadened.
+- **Unresolved Phase 5 product decision (OD-1):** the pure edit rules currently permit editing
+  `COMPLETED`/`CANCELLED` work (unassigning still requires `OPEN`). This is documented as an open
+  question in product-requirements.md, not an approved policy; no restriction was added.
+- **HTTP mapping** of rule-specific codes (for example `ASSIGNEE_REQUIRED`, `DUE_DATE_IN_PAST`) is
+  left to Phase 6; only `NO_CHANGE → 422` is fixed now.
+- **Pre-commit blocker (resolved):** the first Phase 3 pre-commit review found that the "Open product
+  decisions" section was missing from product-requirements.md, although authorization.md and this
+  log referred to OD-1. A scripted insertion had matched the Q17 table row by exact text after
+  Prettier re-padded it, so it silently did nothing. The section (OD-1 terminal-work edits, OD-2
+  completion-rate cohort link) was added with a direct edit and verified by reading it back.
+  Lesson: verify scripted documentation edits by reading the result, not by assuming a match.

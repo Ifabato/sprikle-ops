@@ -5,6 +5,20 @@ const alias = { "@": fileURLToPath(new URL("./src", import.meta.url)) };
 
 export default defineConfig({
   test: {
+    // Coverage is measured for the database-free unit project (`pnpm test:coverage`).
+    coverage: {
+      provider: "v8",
+      // Every domain/validation source file is reported, including files no test imports.
+      include: ["src/domain/**/*.ts", "src/validation/**/*.ts"],
+      reporter: ["text", "json-summary"],
+      reportsDirectory: "coverage",
+      thresholds: {
+        "src/domain/**/*.ts": { lines: 90, statements: 90, functions: 90, branches: 85 },
+        "src/domain/transitions.ts": { branches: 95 },
+        "src/domain/permissions.ts": { branches: 95 },
+        "src/validation/**/*.ts": { lines: 90, statements: 90 },
+      },
+    },
     projects: [
       {
         resolve: { alias },

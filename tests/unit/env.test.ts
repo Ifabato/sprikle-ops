@@ -13,17 +13,21 @@ describe("parseEnv", () => {
     });
   });
 
-  it("accepts a valid IANA time zone", () => {
-    expect(parseEnv({ DATABASE_URL, APP_TIMEZONE: "Europe/London" }).APP_TIMEZONE).toBe(
-      "Europe/London",
+  it("accepts America/New_York, trimming surrounding whitespace", () => {
+    expect(parseEnv({ DATABASE_URL, APP_TIMEZONE: "  America/New_York " }).APP_TIMEZONE).toBe(
+      "America/New_York",
     );
   });
 
-  it("rejects an invalid time zone and names the variable", () => {
-    expect(() => parseEnv({ DATABASE_URL, APP_TIMEZONE: "Mars/Olympus_Mons" })).toThrowError(
-      /APP_TIMEZONE: must be a valid IANA time zone/,
-    );
-  });
+  // The MVP's date rules support America/New_York only (ADR 0005); even valid IANA zones fail.
+  it.each(["Europe/London", "UTC", "America/Chicago", "america/new_york", "Mars/Olympus_Mons", ""])(
+    "rejects APP_TIMEZONE=%j and names the variable",
+    (zone) => {
+      expect(() => parseEnv({ DATABASE_URL, APP_TIMEZONE: zone })).toThrowError(
+        /APP_TIMEZONE: must be America\/New_York \(the only supported time zone\)/,
+      );
+    },
+  );
 
   it("rejects an unknown NODE_ENV", () => {
     expect(() => parseEnv({ DATABASE_URL, NODE_ENV: "staging" })).toThrowError(EnvValidationError);
