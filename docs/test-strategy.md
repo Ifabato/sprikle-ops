@@ -1,6 +1,6 @@
 # Test Strategy
 
-Status: **Draft (Phase 1).** Expanded as each layer is introduced.
+Status: **Updated in Phase 2.** Expanded as each layer is introduced.
 
 ## Goals
 
@@ -41,17 +41,50 @@ status transition (422), stale version (409).
 
 ## Commands
 
-| Command                 | Purpose                              | Available from |
-| ----------------------- | ------------------------------------ | -------------- |
-| `pnpm test`             | all Vitest suites                    | Phase 1        |
-| `pnpm test:unit`        | unit tests only                      | Phase 1        |
-| `pnpm test:integration` | integration tests (needs DB)         | Phase 2        |
-| `pnpm test:e2e`         | Playwright suite                     | Phase 11       |
-| `pnpm check`            | format, lint, typecheck, test, build | Phase 1        |
+| Command                 | Purpose                                                   | Needs database | Available from |
+| ----------------------- | --------------------------------------------------------- | -------------- | -------------- |
+| `pnpm test`             | unit tests (`--project unit`)                             | no             | Phase 1        |
+| `pnpm test:unit`        | same as `pnpm test`                                       | no             | Phase 1        |
+| `pnpm check`            | format, lint, typecheck, unit tests, production build     | no             | Phase 1        |
+| `pnpm db:test:prepare`  | guard, then `prisma migrate deploy` on `sprikle_ops_test` | yes            | Phase 2        |
+| `pnpm test:integration` | `db:test:prepare`, then integration tests (serial)        | yes            | Phase 2        |
+| `pnpm check:full`       | `check` plus `test:integration`                           | yes            | Phase 2        |
+| `pnpm test:e2e`         | Playwright suite                                          | yes            | Phase 11       |
 
-## Current coverage (Phase 1)
+## Test-database safety
 
-- `tests/unit/env.test.ts`: defaults, valid and invalid time zones, invalid `NODE_ENV`, and that
-  error messages never echo supplied values.
-- `tests/unit/health-route.test.ts`: `200` with `no-store`, and `503` without leaking configuration
-  details when the environment is invalid.
+Integration tests never touch the development database (`sprikle_ops`):
+
+1. `tests/integration/setup-env.ts` loads `.env` (without overriding existing variables) and calls
+   `assertSafeTestDatabase()` on the **original** `DATABASE_URL` and `TEST_DATABASE_URL` before
+   pointing `DATABASE_URL` at the test database. It refuses unless `NODE_ENV=test`, the test
+   database is exactly `sprikle_ops_test`, the host is local (`localhost`, `127.0.0.1`, `[::1]`), no
+   connection-redirecting query parameters are present, and the two URLs target different databases.
+2. `pnpm db:test:prepare` applies the same guard, then only runs `prisma migrate deploy`.
+3. Cleanup (`truncateTestDatabase()`) checks `current_database()` on the same transaction
+   immediately before `TRUNCATE`, and truncates an explicit table list (never `_prisma_migrations`,
+   no `CASCADE`).
+4. Integration files run one at a time (`fileParallelism: false`).
+
+All refusal paths are unit-tested (`tests/unit/database-safety.test.ts`). The localhost restriction is
+deliberate; CI (Phase 7) will need its own explicit, trusted database-host configuration.
+
+## Current coverage (Phase 2)
+
+Unit (no database):
+
+- `tests/unit/env.test.ts`: defaults, time-zone and `DATABASE_URL` validation, errors never echo values.
+- `tests/unit/health-route.test.ts`: 200 when healthy; 503 when the database is unavailable; 503 with
+  the database check skipped when configuration is invalid; no leaked values.
+- `tests/unit/health-check.test.ts`: ok, error, timeout, late failure after timeout (no unhandled
+  rejection), and log redaction.
+- `tests/unit/database-safety.test.ts`: every guard refusal path, local hosts, redaction, and the
+  `current_database()` check.
+
+Integration (`sprikle_ops_test`):
+
+- `tests/integration/db-constraints.test.ts`: every CHECK constraint, unique and foreign-key
+  restrictions, append-only triggers, enum sort order, sequential reference numbers, `timestamptz`
+  columns, planned indexes, and that migration history survives cleanup.
+- `tests/integration/health-database.test.ts`: application code targets the test database; health
+  returns 200; an unreachable database reports `unavailable` within the timeout without details.

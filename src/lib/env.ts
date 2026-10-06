@@ -22,6 +22,10 @@ export const envSchema = z.object({
     .min(1)
     .refine(isValidTimeZone, { message: "must be a valid IANA time zone, e.g. America/New_York" })
     .default("America/New_York"),
+  DATABASE_URL: z.url({
+    protocol: /^postgres(ql)?$/,
+    error: "must be a postgresql:// connection URL",
+  }),
 });
 
 export type Env = z.infer<typeof envSchema>;

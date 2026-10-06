@@ -1,6 +1,6 @@
 # Routes and API
 
-Status: **Approved design.** Phase 1 implements only `GET /api/health` (without a database check).
+Status: **Approved design.** Implemented so far: `GET /api/health` (configuration and database checks, Phase 2).
 
 ## Layering
 
@@ -41,6 +41,32 @@ no DELETE endpoint.
 - JSON bodies, camelCase keys, ISO-8601 UTC timestamps (`…Z`).
 - Work orders are addressed by reference (`WO-000123`) in URLs.
 - Authenticated responses send `Cache-Control: no-store`. The health endpoint also sends `no-store`.
+
+## Health endpoint (implemented)
+
+`GET /api/health` is public and returns:
+
+```json
+{
+  "status": "ok",
+  "service": "sprikle-ops",
+  "time": "2026-10-06T00:51:59.426Z",
+  "checks": { "config": "ok", "database": "ok" }
+}
+```
+
+| `checks.config` | `checks.database`         | HTTP |
+| --------------- | ------------------------- | ---- |
+| `ok`            | `ok`                      | 200  |
+| `ok`            | `unavailable`             | 503  |
+| `invalid`       | `skipped` (not attempted) | 503  |
+
+The database check runs `SELECT 1` with a 1 s server-side statement timeout inside a 2 s overall
+budget; the pool's connection timeout is 1.5 s. Responses never include error messages, connection
+strings, hosts, or credentials; server logs contain only an error class and a short code. Exposing
+up/down status publicly is acceptable for this local MVP; a deployed version would restrict or
+reduce it.
+
 - Every response carries an `x-request-id` header (from Phase 6).
 
 ## Error shape

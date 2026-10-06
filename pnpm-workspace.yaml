@@ -1,6 +1,16 @@
 # pnpm 10 blocks dependency lifecycle scripts unless explicitly allowed.
-# unrs-resolver (via eslint-config-next) ships a postinstall that only downloads a
-# native binding when the platform's optional package is missing; the prebuilt
-# binding is installed normally, so the script is intentionally left blocked.
+#
+# Allowed:
+# - @prisma/engines: postinstall downloads Prisma's native schema engine (used by
+#   `prisma migrate`) from Prisma's official binary host. Without it, the Prisma CLI
+#   downloads the same binary lazily on first use.
+onlyBuiltDependencies:
+  - "@prisma/engines"
+
+# Intentionally blocked:
+# - prisma: preinstall only checks the Node.js version (engines are pinned in package.json).
+# - unrs-resolver (via eslint-config-next): postinstall only downloads a native binding when
+#   the platform's optional package is missing; the prebuilt binding installs normally.
 ignoredBuiltDependencies:
+  - prisma
   - unrs-resolver

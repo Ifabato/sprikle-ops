@@ -23,8 +23,14 @@ test-results/
 npm-debug.log*
 pnpm-debug.log*
 
+# local Claude Code settings (shared .claude/ project config may be committed later)
+.claude/settings.local.json
+
 # OS / editor
 .DS_Store
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# generated Prisma client
+src/generated/

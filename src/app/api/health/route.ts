@@ -1,27 +1,35 @@
 import { getEnv } from "@/lib/env";
+import { checkDatabase, type DatabaseStatus } from "@/server/health";
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 
 /**
- * Liveness check. Phase 1 reports application and configuration status only;
- * a database check is added in Phase 2.
+ * Public health check: configuration and database reachability.
+ * Responds 200 only when every check passes, otherwise 503. Responses never include
+ * error messages, connection strings, hosts, or credentials.
  */
-export function GET(): Response {
+export async function GET(): Promise<Response> {
   const time = new Date().toISOString();
 
+  let config: "ok" | "invalid" = "ok";
   try {
     getEnv();
   } catch (error) {
     // Variable names and rules are logged server-side only; never returned to callers.
     console.error(error);
-    return Response.json(
-      { status: "error", service: "sprikle-ops", time, checks: { config: "invalid" } },
-      { status: 503, headers: NO_STORE },
-    );
+    config = "invalid";
   }
 
+  const database: DatabaseStatus | "skipped" = config === "ok" ? await checkDatabase() : "skipped";
+  const healthy = config === "ok" && database === "ok";
+
   return Response.json(
-    { status: "ok", service: "sprikle-ops", time, checks: { config: "ok" } },
-    { status: 200, headers: NO_STORE },
+    {
+      status: healthy ? "ok" : "error",
+      service: "sprikle-ops",
+      time,
+      checks: { config, database },
+    },
+    { status: healthy ? 200 : 503, headers: NO_STORE },
   );
 }

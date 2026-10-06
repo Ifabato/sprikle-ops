@@ -42,12 +42,12 @@ and no global project dependencies.
 
 ### Versions selected for later phases (verified compatible, not yet installed)
 
-| Package                                          | Version                                    | Phase | Compatibility evidence                                                                                      |
-| ------------------------------------------------ | ------------------------------------------ | ----- | ----------------------------------------------------------------------------------------------------------- |
-| `prisma`, `@prisma/client`, `@prisma/adapter-pg` | 7.10.0                                     | 2     | Requires Node `>=24` (ok) and TypeScript `>=5.4` (ok). Better Auth 1.7.7 peer: `prisma ^5 \|\| ^6 \|\| ^7`. |
-| `better-auth`                                    | 1.7.7                                      | 4     | Peers: `next ^16`, `react ^19`, `@prisma/client ^7`, `vitest ^5`.                                           |
-| `@playwright/test`                               | 1.63.0                                     | 11    | Next.js optional peer `^1.51.1`; Node `>=20`.                                                               |
-| PostgreSQL                                       | 16.x (official `postgres:16-alpine` image) | 2     | Exact minor tag pinned in `docker-compose.yml` in Phase 2 after the image is pulled and verified.           |
+| Package                                          | Version                                      | Phase | Compatibility evidence                                                                                      |
+| ------------------------------------------------ | -------------------------------------------- | ----- | ----------------------------------------------------------------------------------------------------------- |
+| `prisma`, `@prisma/client`, `@prisma/adapter-pg` | 7.10.0 (**installed in Phase 2**)            | 2     | Requires Node `>=24` (ok) and TypeScript `>=5.4` (ok). Better Auth 1.7.7 peer: `prisma ^5 \|\| ^6 \|\| ^7`. |
+| `better-auth`                                    | 1.7.7                                        | 4     | Peers: `next ^16`, `react ^19`, `@prisma/client ^7`, `vitest ^5`.                                           |
+| `@playwright/test`                               | 1.63.0                                       | 11    | Next.js optional peer `^1.51.1`; Node `>=20`.                                                               |
+| PostgreSQL                                       | 16.15 (`postgres:16.15-alpine3.24` + digest) | 2     | **Installed in Phase 2**; see ADR 0003.                                                                     |
 
 Versions are re-checked with `npm view <pkg> dist-tags` at the start of the phase that installs them;
 any change is recorded here.
@@ -79,7 +79,7 @@ any change is recorded here.
   `pnpm-workspace.yaml` → `ignoredBuiltDependencies`; the prebuilt `darwin-arm64` binding installs
   as a normal optional dependency.
 - **Environment:** a single `.env` file (gitignored), created from `.env.example`. Next.js loads it
-  natively; Prisma 7 will load it explicitly from `prisma.config.ts` in Phase 2. All variables are
+  natively; Prisma 7 loads it explicitly in `prisma.config.ts` (ADR 0003). All variables are
   validated by `src/lib/env.ts` (Zod).
 - **Local resources (D11):** Docker Desktop memory 2–3 GB (set by the developer); PostgreSQL capped
   at ~512 MB in Compose; Playwright runs Chromium only. No Redis, queues, or other services.

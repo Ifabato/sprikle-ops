@@ -1,0 +1,40 @@
+# Local development database for Sprikle Ops.
+# Credentials come from .env (created by `pnpm env:init`); Compose refuses to start without them.
+# The port is published on 127.0.0.1 only. Stop with `pnpm db:stop`; never use `down -v`
+# (it deletes the data volume).
+name: sprikle-ops
+
+services:
+  db:
+    # postgres:16.15-alpine3.24, pinned to the multi-arch index digest (includes linux/arm64/v8).
+    image: postgres:16.15-alpine3.24@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env (run pnpm env:init)}
+      POSTGRES_DB: sprikle_ops
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Runs only when the data volume is first initialized: creates sprikle_ops_test.
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    # Sized for the ~512 MB memory cap below.
+    command: >-
+      postgres
+      -c shared_buffers=128MB
+      -c effective_cache_size=256MB
+      -c work_mem=4MB
+      -c maintenance_work_mem=64MB
+      -c max_connections=30
+    mem_limit: 512m
+    shm_size: 128m
+    healthcheck:
+      test: ["CMD-SHELL", 'pg_isready -U "$${POSTGRES_USER}" -d sprikle_ops']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  pgdata:
