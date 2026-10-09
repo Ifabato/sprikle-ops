@@ -1,0 +1,107 @@
+# Continuous integration: the same commands as the local checks (see README "Verification").
+# No repository secrets are used. PostgreSQL runs as a throwaway service container that exists
+# only for the job; its password below is a fixed, CI-only value for that container, not a
+# credential for anything else. The Better Auth secret is generated randomly per job.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APP_TIMEZONE: America/New_York
+  # Throwaway service-container databases (see `services` below).
+  DATABASE_URL: postgresql://sprikle:ci-only-throwaway@localhost:5432/sprikle_ops
+  TEST_DATABASE_URL: postgresql://sprikle:ci-only-throwaway@localhost:5432/sprikle_ops_test
+  BETTER_AUTH_URL: http://localhost:3000
+
+jobs:
+  check:
+    name: Format, lint, typecheck, unit tests, build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Generate a per-job auth secret
+        run: echo "BETTER_AUTH_SECRET=$(openssl rand -base64 48)" >> "$GITHUB_ENV"
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test:coverage
+      - run: pnpm test:timezones
+      - run: pnpm build
+
+  integration:
+    name: Integration tests (PostgreSQL)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      db:
+        image: postgres:16.15-alpine3.24@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
+        env:
+          POSTGRES_USER: sprikle
+          POSTGRES_PASSWORD: ci-only-throwaway
+          POSTGRES_DB: sprikle_ops
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U sprikle -d sprikle_ops"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Create the test database (as docker/postgres/init does locally)
+        run: psql "$DATABASE_URL" -c "CREATE DATABASE sprikle_ops_test"
+      - name: Generate a per-job auth secret
+        run: echo "BETTER_AUTH_SECRET=$(openssl rand -base64 48)" >> "$GITHUB_ENV"
+      # Applies migrations to sprikle_ops_test through the fail-closed guard, then runs the suite.
+      - run: pnpm test:integration
+
+  e2e:
+    name: Browser tests (Playwright, production build)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      db:
+        image: postgres:16.15-alpine3.24@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
+        env:
+          POSTGRES_USER: sprikle
+          POSTGRES_PASSWORD: ci-only-throwaway
+          POSTGRES_DB: sprikle_ops
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U sprikle -d sprikle_ops"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: psql "$DATABASE_URL" -c "CREATE DATABASE sprikle_ops_test"
+      - name: Generate a per-job auth secret
+        run: echo "BETTER_AUTH_SECRET=$(openssl rand -base64 48)" >> "$GITHUB_ENV"
+      - run: pnpm exec playwright install --with-deps --only-shell chromium
+      # The suite's own config builds the app, serves it on 127.0.0.1:3100, and provisions
+      # random-password test users in sprikle_ops_test. Traces, videos, and screenshots are off.
+      - run: pnpm test:e2e
