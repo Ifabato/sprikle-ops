@@ -23,8 +23,10 @@ test-results/
 npm-debug.log*
 pnpm-debug.log*
 
-# local Claude Code settings (shared .claude/ project config may be committed later)
-.claude/settings.local.json
+# Claude Code: only the deliberately vendored skills (each with LICENSE and SOURCE.md) are
+# tracked; local settings, permissions, transcripts, and caches stay ignored.
+.claude/*
+!.claude/skills/
 
 # OS / editor
 .DS_Store

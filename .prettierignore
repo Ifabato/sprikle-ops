@@ -8,3 +8,7 @@ next-env.d.ts
 src/generated/
 # Impeccable engine-managed files: kept byte-for-byte as the engine wrote and the user reviewed them.
 .impeccable/
+# Written and refreshed by the Impeccable documenter.
+DESIGN.md
+# Vendored third-party skill instructions: kept byte-for-byte as published upstream.
+.claude/skills/

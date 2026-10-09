@@ -126,3 +126,66 @@ commit `62f461d629d9c5080a83513b1d24ed9389b2c12f`; expected engine 0.1.11; cache
 
 `DESIGN.md` is intentionally not written: for a new visual world, Impeccable's documenter writes it
 from the built interface at the end of Phase 4.
+
+## Phase 4B record (2026-10-06)
+
+The plugin stayed disabled throughout (no hooks). The engine ran exactly twice, manually, each
+time with `DO_NOT_TRACK=1` and `IMPECCABLE_NO_TELEMETRY=1`, and with `IMPECCABLE_BIN` pointing at
+the cached binary so the launcher could not reach its download branch. Before the first call,
+plugin 4.5.0 at commit `62f461d629d9c5080a83513b1d24ed9389b2c12f`, engine 0.1.11, and the cached
+binary's SHA-256 (`7427918d…c05e6`) were re-verified; the hash was checked again before `detect`.
+
+| Step                                        | Engine | Result                                                                                                |
+| ------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------- |
+| `context --target src/app/(app)/layout.tsx` | yes    | loaded PRODUCT.md and the surface brief; no files written                                             |
+| `detect --json` (25 changed UI files)       | yes    | `[]`, exit 0 (clean); browser-overlay step skipped (needs the prohibited live server)                 |
+| Audit (`audit.md`, `craft-floor.md`)        | no     | text checklist in the build thread; report only                                                       |
+| Finish review                               | no     | fresh read-only subagent following `degraded/finish-reviewer.md`: `disposition: fix`, 7 fixes         |
+| One bounded polish round                    | no     | all 7 fixes applied (presentation only), plus touch-target and landmark items from the audit          |
+| Verdict pass (same reviewer)                | no     | 6 resolved, 1 partial (caret/accent color not visible in captures); 2 regressions; `disposition: fix` |
+| Documenter                                  | no     | fresh subagent following `degraded/documenter.md`: wrote `DESIGN.md` and `.impeccable/design.json`    |
+
+- **Engine directives not followed:** `context` asked for a live interview/decision-page probe and
+  pre-authorized the skill's subagents. The decision server is prohibited and Direction A was already
+  pinned, so no probe was made; only the two user-approved subagents ran. The `buildPath` notice
+  applies only when image generation exists, so it was not raised.
+- **Network:** a 50 ms socket sampler saw no engine sockets during either call, and
+  `~/.impeccable/update-check.json` did not change. Short connections can fall between samples, so
+  this is not a claim of zero network access.
+- **Screenshots:** captured by the Playwright smoke suite from the production build (desktop
+  1440×900, mobile 390×844) into the ignored `.impeccable/review/`, and opened by the reviewer as
+  images. They were retaken after the polish round, so `DESIGN.md` describes the final interface.
+- **Open after the bounded round (not fixed, for user decision):** R1, the public band's wordmark is
+  not aligned with the content column on desktop; R2, the sign-in (384px) and not-found (448px)
+  columns differ. `DESIGN.md` records both as "not yet standardized", not as rules.
+- **Files:** `DESIGN.md` is a candidate for version control and is excluded from Prettier
+  (documenter-managed). `.impeccable/design.json` stays ignored until its contents and a specific
+  Git exception are separately reviewed. Everything else under `.impeccable/` remains ignored.
+
+## Phase 4B visual revision record (2026-10-06)
+
+After viewing the first 4B interface, the user found it too plain and approved a revision: Concept A
+"Signal Board", a public landing page at `/`, a split-screen sign-in, and a coordinated app-shell
+redesign. The system-font-only rule and heading weight/size caps were lifted (self-hosted Schibsted
+Grotesk and JetBrains Mono, OFL-1.1); the app stays light-only. R1 and R2 above were superseded by
+the redesign (the public header and content now share one container).
+
+| Step                                                        | Engine | Result                                                                              |
+| ----------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------- |
+| `context --target src/app/(public)/page.tsx`                | yes    | no surface brief yet; product context loaded                                        |
+| `surface-brief write` landing (`src/app/(public)/page.tsx`) | yes    | new brief, six contract blocks (ignored pending a Git exception decision)           |
+| `surface-brief write` app shell + sign-in                   | yes    | committed shell brief updated to "Signal Board" (tracked change)                    |
+| `detect --json` (37 UI files)                               | yes    | 3 findings: off-ramp arbitrary font sizes; fixed with named type tokens             |
+| Fresh reviewer (finish + anti-generic critique)             | no     | `disposition: fix`, 8 material fixes                                                |
+| Polish round 1                                              | no     | all 8 applied; verdict: 6 resolved, 2 partial, 2 regressions                        |
+| Polish round 2                                              | no     | remaining items and regressions addressed (final verdict in the implementation log) |
+| Documenter                                                  | no     | rewrote `DESIGN.md` and `.impeccable/design.json` from the final build              |
+
+- Each engine call was preceded by the version/hash check and received both opt-outs and the pinned
+  `IMPECCABLE_BIN`. A 50 ms socket sampler saw no engine sockets and `update-check.json` did not
+  change; this is not a claim of zero network access. One attempted brief write failed in the
+  shell before reaching the engine (unsplit command variable) and was rerun.
+- No second detector pass was run (the three findings were mechanical token fixes).
+- Not run: `concept-seed`, `serve-question`, the decision server, `live-server`,
+  `critique-storage`, `comp-diff`, `build-phase`, image generation, updates. Engine directives to
+  probe the user or open a decision page were not followed; the concept was pinned by the user.
