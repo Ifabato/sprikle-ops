@@ -1,0 +1,134 @@
+/*
+ * Brindle prototype styles (scoped with .br- prefixes). Motion is driven by GSAP; this file holds
+ * static states, the pre-animation "pending" state, and the Shimmer Button keyframes.
+ */
+
+.br-root {
+  --br-ink: #f3f5f9;
+  --br-muted: #a3aec2;
+  --br-canvas: #05070c;
+}
+
+/* Elements GSAP will reveal start hidden only when JS runs; <noscript> and reduced motion show them. */
+.br-root .br-pending {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .br-root .br-pending {
+    opacity: 1 !important;
+  }
+}
+
+/* Static film grain (not animated). */
+.br-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.08;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Solid tones: background-clip text does not survive SplitText's transformed character boxes. */
+.br-headline {
+  color: #ffffff;
+}
+.br-headline + .br-headline {
+  color: #b9c4da;
+}
+
+.br-navlink {
+  background: linear-gradient(currentColor, currentColor) left bottom / 0% 1px no-repeat;
+  transition:
+    background-size 320ms cubic-bezier(0.16, 1, 0.3, 1),
+    color 200ms ease;
+}
+.br-navlink:hover,
+.br-navlink:focus-visible {
+  background-size: 100% 1px;
+  color: var(--br-ink);
+}
+
+/* Strand emphasis (selection). */
+.br-strand-state {
+  transition:
+    opacity 450ms ease,
+    stroke-width 450ms ease,
+    filter 450ms ease;
+}
+.br-strand-off {
+  opacity: 0.32;
+}
+.br-strand-on {
+  opacity: 1;
+  filter: drop-shadow(0 0 6px rgb(190 210 255 / 0.85));
+}
+/* Dimmed jobs stay opaque so strands never show through their text. */
+.br-dim {
+  transition: filter 450ms ease;
+}
+.br-dimmed {
+  filter: brightness(0.6) saturate(0.6);
+}
+@media (prefers-reduced-motion: reduce) {
+  .br-strand-state,
+  .br-dim {
+    transition: none;
+  }
+}
+
+/* Shimmer Button keyframes, from Magic UI (MIT; see vendor/PROVENANCE.md). BRINDLE: the original
+   infinite animations run once on entrance and once per hover/focus. */
+@keyframes br-shimmer-slide {
+  to {
+    transform: translate(calc(100cqw - 100%), 0);
+  }
+}
+@keyframes br-shimmer-slide-again {
+  to {
+    transform: translate(calc(100cqw - 100%), 0);
+  }
+}
+@keyframes br-spin-around {
+  0% {
+    transform: translateZ(0) rotate(0);
+  }
+  15%,
+  35% {
+    transform: translateZ(0) rotate(90deg);
+  }
+  65%,
+  85% {
+    transform: translateZ(0) rotate(270deg);
+  }
+  100% {
+    transform: translateZ(0) rotate(360deg);
+  }
+}
+@keyframes br-spin-around-again {
+  0% {
+    transform: translateZ(0) rotate(0);
+  }
+  100% {
+    transform: translateZ(0) rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .br-shimmer-slide {
+    animation: br-shimmer-slide var(--speed) ease-in-out 1 both;
+    animation-delay: 1.6s;
+  }
+  .br-spin-around {
+    animation: br-spin-around calc(var(--speed) * 2) linear 1 both;
+    animation-delay: 1.6s;
+  }
+  .group:hover .br-shimmer-slide,
+  .group:focus-visible .br-shimmer-slide {
+    animation: br-shimmer-slide-again var(--speed) ease-in-out 1 both;
+  }
+  .group:hover .br-spin-around,
+  .group:focus-visible .br-spin-around {
+    animation: br-spin-around-again calc(var(--speed) * 1.2) linear 1 both;
+  }
+}
