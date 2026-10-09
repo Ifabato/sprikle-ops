@@ -1,5 +1,5 @@
 ---
-name: Sprikle Ops
+name: Brindle
 description: A dispatcher's job board on cool white sheets and service navy; hi-vis orange appears only where work is at risk or where "today" is.
 colors:
   surface-page: "#f4f6f8"
@@ -200,13 +200,13 @@ components:
     height: "44px"
 ---
 
-# Design System: Sprikle Ops
+# Design System: Brindle
 
 ## Overview
 
 **Creative North Star: "The Signal Board"**
 
-Sprikle Ops is dispatch-board paper: cool white sheets ruled with hairlines on a cool grey field, deep service-navy ink and navy bands, and one hi-vis safety orange that appears only where work is at risk or where "today" sits. Headlines are set in Schibsted Grotesk, heavy and tight; references, dates, times, and due labels are set in JetBrains Mono; everything you read at length is the system UI stack. The result is calm by default and loud only for risk.
+Brindle is dispatch-board paper: cool white sheets ruled with hairlines on a cool grey field, deep service-navy ink and navy bands, and one hi-vis safety orange that appears only where work is at risk or where "today" sits. Headlines are set in Schibsted Grotesk, heavy and tight; references, dates, times, and due labels are set in JetBrains Mono; everything you read at length is the system UI stack. The result is calm by default and loud only for risk.
 
 Two surfaces share one world. The public landing page (Persuade) leads with a heavy navy headline beside a large white board sheet, a working sample board whose rows are synthetic and labeled "Sample data · illustrative"; dragging the sample day re-derives every due label and re-sorts rows by risk. The application (Operate) is a 240px navy rail and a single column of open text on the grey field, ruled by hairlines rather than boxed in cards. Sign-in is a split screen: a navy brand panel (with a compact sample board on large screens) beside the form.
 
@@ -275,7 +275,7 @@ Five status pairs (`status-open`, `status-progress`, `status-blocked`, `status-c
 - **Display 2** (800, fluid 32 to 56px, 1.02, -0.035em): landing section headings, the sign-in panel headline, the contact band, and the "Page not found" heading.
 - **H1** (700, 36px, 1.08, -0.02em): app page titles and the sign-in heading; at 800 for the principle titles and the "Something went wrong." heading.
 - **H2** (800, 26px, 1.2, -0.02em): honest-state headings ("No work orders yet", "You don't have access to this page."); at 700 for workflow step names on navy.
-- **Wordmark** (700, 21px, line-height 1, -0.02em): "Sprikle Ops" beside the mark.
+- **Wordmark** (700, 21px, line-height 1, -0.02em): "Brindle" beside the mark.
 - **Lead** (400, 19px, 1.55): the hero promise from 640px up (body size below).
 - **Body** (400, 16px, 1.5): descriptions, planned-item lists, inputs, profile values; descriptions cap at 40 to 60ch.
 - **Table** (14px): buttons and links (600), nav labels (500), board row titles (600), longer captions on navy.

@@ -6,7 +6,7 @@ export const DEFAULT_RETURN_PATH = "/dashboard";
 
 const ALLOWED_AREAS = ["/dashboard", "/work-orders", "/analytics", "/profile"] as const;
 const MAX_LENGTH = 512;
-const PARSE_BASE = "https://sprikle.invalid";
+const PARSE_BASE = "https://brindle.invalid";
 
 export function safeReturnPath(value: unknown): string {
   if (typeof value !== "string" || value.length === 0 || value.length > MAX_LENGTH) {

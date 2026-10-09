@@ -1,4 +1,4 @@
-# Sprikle Ops
+# Brindle
 
 A full-stack work-order system for small service businesses: an operations manager creates and
 assigns jobs, technicians update the work assigned to them, every change is recorded with who made
@@ -62,6 +62,7 @@ Requirements: macOS or Linux, Node.js 24 (`.nvmrc`), pnpm 10.34.6 through Corepa
 (`corepack enable pnpm`), Docker with 2–3 GB of memory.
 
 ```bash
+git clone https://github.com/Ifabato/brindle.git && cd brindle
 pnpm install --frozen-lockfile   # also generates the Prisma client
 pnpm env:init                    # creates .env with random local secrets; never overwrites an existing .env
                                  # (existing .env from an older checkout: pnpm env:init --add-missing)
@@ -86,7 +87,7 @@ generated into your ignored `.env` as `SEED_DEMO_PASSWORD` (view it with
 Ports: PostgreSQL uses `127.0.0.1:5432` and the app `localhost:3000`. If 5432 is taken, edit `.env`
 before `pnpm db:up`: set `POSTGRES_PORT` and the same port in `DATABASE_URL` and `TEST_DATABASE_URL`.
 If the app runs on another port, set `BETTER_AUTH_URL` to match (it is the trusted origin for
-sign-in). The Compose project is named `sprikle-ops`; a second checkout on the same machine needs
+sign-in). The Compose project keeps the legacy name `sprikle-ops` ([legacy identifiers](docs/legacy-identifiers.md)); a second checkout on the same machine needs
 `COMPOSE_PROJECT_NAME=<other-name>` so it gets its own container and volume.
 
 Environment variables are documented in [`.env.example`](.env.example) and validated at startup
@@ -187,4 +188,4 @@ working application.
 [Query plans](docs/performance.md) · [Demo script](docs/demo.md) ·
 [Project evidence](docs/project-evidence.md) · [Security advisories](docs/security-advisories.md) ·
 [Third-party licenses](docs/third-party-licenses.md) ·
-[Decision records](docs/decisions/) · [Implementation log](docs/implementation-log.md)
+[Legacy identifiers](docs/legacy-identifiers.md) · [Decision records](docs/decisions/) · [Implementation log](docs/implementation-log.md)

@@ -51,7 +51,7 @@ export function MobileNav({
   return (
     <header className="on-rail bg-rail md:hidden">
       <div className="flex min-h-14 items-center justify-between px-4">
-        <Link href="/dashboard" className="rounded-control py-2" aria-label="Sprikle Ops dashboard">
+        <Link href="/dashboard" className="rounded-control py-2" aria-label="Brindle dashboard">
           <Wordmark onDark />
         </Link>
         <button

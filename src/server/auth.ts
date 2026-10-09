@@ -65,7 +65,7 @@ export function createAuth({ db, secret, baseURL, trustedIpHeader }: AuthDepende
   };
 
   return betterAuth({
-    appName: "Sprikle Ops",
+    appName: "Brindle",
     secret,
     baseURL,
     basePath: "/api/auth",
@@ -124,17 +124,17 @@ export function createAuth({ db, secret, baseURL, trustedIpHeader }: AuthDepende
 
 export type Auth = ReturnType<typeof createAuth>;
 
-const globalForAuth = globalThis as unknown as { sprikleOpsAuth?: Auth };
+const globalForAuth = globalThis as unknown as { brindleAuth?: Auth };
 
 /** Lazily created so builds and unit tests never need auth configuration or a database. */
 export function getAuth(): Auth {
-  if (!globalForAuth.sprikleOpsAuth) {
+  if (!globalForAuth.brindleAuth) {
     const { BETTER_AUTH_SECRET, BETTER_AUTH_URL } = getEnv();
-    globalForAuth.sprikleOpsAuth = createAuth({
+    globalForAuth.brindleAuth = createAuth({
       db: getDb(),
       secret: BETTER_AUTH_SECRET,
       baseURL: BETTER_AUTH_URL,
     });
   }
-  return globalForAuth.sprikleOpsAuth;
+  return globalForAuth.brindleAuth;
 }

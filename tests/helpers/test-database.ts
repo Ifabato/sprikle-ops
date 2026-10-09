@@ -17,7 +17,7 @@ export function getTestPrisma(): PrismaClient {
   if (!client) {
     const url = assertSafeTestDatabase({
       NODE_ENV: process.env.NODE_ENV,
-      DATABASE_URL: process.env.SPRIKLE_DEVELOPMENT_DATABASE_URL,
+      DATABASE_URL: process.env.BRINDLE_DEVELOPMENT_DATABASE_URL,
       TEST_DATABASE_URL: process.env.TEST_DATABASE_URL,
     });
     client = new PrismaClient({ adapter: new PrismaPg({ connectionString: url, max: 2 }) });

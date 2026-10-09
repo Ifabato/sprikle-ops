@@ -86,7 +86,7 @@ Details: [ADR 0002](decisions/0002-authentication-library.md).
 ```json
 {
   "status": "ok",
-  "service": "sprikle-ops",
+  "service": "brindle",
   "time": "2026-10-06T00:51:59.426Z",
   "checks": { "config": "ok", "database": "ok" }
 }

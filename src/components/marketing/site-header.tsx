@@ -7,7 +7,7 @@ export function SiteHeader({ sections = true }: { sections?: boolean }) {
   return (
     <header className="border-b border-line bg-surface-page/90">
       <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="rounded-control py-2" aria-label="Sprikle Ops home">
+        <Link href="/" className="rounded-control py-2" aria-label="Brindle home">
           <Wordmark />
         </Link>
         <nav aria-label="Site" className="flex items-center gap-1 sm:gap-2">

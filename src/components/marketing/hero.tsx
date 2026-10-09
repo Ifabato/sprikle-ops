@@ -41,8 +41,9 @@ export function Hero() {
           <p className="flex items-start gap-2.5 border-t border-line pt-5 text-table text-ink-secondary">
             <span aria-hidden="true" className="mt-[0.45em] size-2 shrink-0 rounded-full bg-ink" />
             <span>
-              <strong className="font-semibold text-ink">In development.</strong> Sign-in, roles,
-              and the app shell are built; work orders, the dashboard, and analytics come next.
+              <strong className="font-semibold text-ink">In development.</strong> Work orders,
+              roles, audit history, the dashboard, and analytics run locally on synthetic demo data;
+              there is no public deployment.
             </span>
           </p>
         </div>

@@ -60,8 +60,8 @@ export function Workflow() {
             One job, one record, from first call to closed.
           </h2>
           <p className="text-body text-rail-muted">
-            Sprikle Ops is being built around this workflow. Each step adds to an activity trail
-            that can only grow, so the history of a job is never rewritten.
+            Brindle is being built around this workflow. Each step adds to an activity trail that
+            can only grow, so the history of a job is never rewritten.
           </p>
         </div>
         <ol className="relative flex flex-col">

@@ -686,3 +686,13 @@ CONFLICT`; `VERSION_LIMIT` → 409; `CLOCK_SKEW` → 500 ([api.md](api.md)).
   database was not touched.
 - **README fix from that run:** documented what to change when port 5432 or 3000 is taken, and the
   Compose project name for a second checkout.
+
+## Brindle branding (2026-10-09)
+
+The product is now named **Brindle** everywhere it is visible (interface, metadata, accessible
+labels, wordmark, package name, health endpoint `service` field, current documentation), and the
+repository is https://github.com/Ifabato/brindle. Entries above this one are historical and keep the
+working name "Sprikle Ops". Database, Compose, account-email, and migration identifiers keep their
+legacy `sprikle` spelling so existing local data stays attached; see
+[legacy-identifiers.md](legacy-identifiers.md). Portfolio media were regenerated from a production
+build against a disposable database (not the development database).

@@ -57,7 +57,8 @@ dictionary and explainable from the stored records.
 
 ## Brand Commitments
 
-- Name: "Sprikle Ops", set as a text wordmark. No logo asset exists.
+- Name: "Brindle" (formerly the working name "Sprikle Ops"), set as a text wordmark beside the
+  two-row "today" mark. No other logo asset exists.
 - Binding visual brief: a polished, modern operations product with strong typography and
   hierarchy; fast scanning of priorities, due dates, and statuses; readable tables with practical
   mobile alternatives; accessible forms, navigation, focus states, and errors; restrained but

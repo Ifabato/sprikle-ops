@@ -1,4 +1,6 @@
-# Local development database for Sprikle Ops.
+# Local development database for Brindle. The Compose project, volume, database names, and
+# user keep the legacy `sprikle` identifiers so existing local data stays attached
+# (docs/legacy-identifiers.md).
 # Credentials come from .env (created by `pnpm env:init`); Compose refuses to start without them.
 # The port is published on 127.0.0.1 only. Stop with `pnpm db:stop`; never use `down -v`
 # (it deletes the data volume).

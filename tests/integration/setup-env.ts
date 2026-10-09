@@ -16,5 +16,5 @@ const testUrl = assertSafeTestDatabase({
   TEST_DATABASE_URL: process.env.TEST_DATABASE_URL,
 });
 
-process.env.SPRIKLE_DEVELOPMENT_DATABASE_URL = developmentUrl;
+process.env.BRINDLE_DEVELOPMENT_DATABASE_URL = developmentUrl;
 process.env.DATABASE_URL = testUrl;

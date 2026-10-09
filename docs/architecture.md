@@ -1,6 +1,6 @@
 # Architecture
 
-Sprikle Ops is a single Next.js application (App Router) backed by PostgreSQL. There is one
+Brindle is a single Next.js application (App Router) backed by PostgreSQL. There is one
 deployable unit and one database; the layering below is enforced by module boundaries and lint
 rules, not by separate services.
 

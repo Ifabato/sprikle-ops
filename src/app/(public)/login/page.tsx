@@ -29,7 +29,7 @@ export default async function LoginPage({
   return (
     <div className="grid min-h-dvh grid-rows-[auto_1fr] lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:grid-rows-1">
       <aside className="on-rail flex flex-col justify-between gap-10 bg-rail px-4 py-5 text-rail-text sm:px-8 lg:px-14 lg:py-12">
-        <Link href="/" className="self-start rounded-control py-2" aria-label="Sprikle Ops home">
+        <Link href="/" className="self-start rounded-control py-2" aria-label="Brindle home">
           <Wordmark onDark />
         </Link>
         <div className="hidden flex-col gap-8 lg:flex">
@@ -61,7 +61,7 @@ export default async function LoginPage({
             href="/"
             className="inline-flex min-h-11 items-center self-start rounded-control text-table font-semibold text-ink-secondary underline decoration-line-control underline-offset-[6px] hover:text-ink"
           >
-            About Sprikle Ops
+            About Brindle
           </Link>
         </div>
       </main>

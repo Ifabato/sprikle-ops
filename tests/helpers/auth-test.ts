@@ -15,7 +15,7 @@ export const TEST_BASE_URL = "http://localhost:3000";
 /** Test-only values (never used outside the test database). */
 export const TEST_AUTH_SECRET = "integration-test-only-secret-0123456789abcdefghij";
 export const TEST_PASSWORD = "integration-test-password-0001";
-const TEST_CLIENT_HEADER = "x-sprikle-test-client";
+const TEST_CLIENT_HEADER = "x-brindle-test-client";
 export const SESSION_COOKIE_NAME = "better-auth.session_token";
 
 export const TEST_USERS = {

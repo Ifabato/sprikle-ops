@@ -4,11 +4,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Sprikle Ops — work orders with risk you can see",
-    template: "%s · Sprikle Ops",
+    default: "Brindle — work orders with risk you can see",
+    template: "%s · Brindle",
   },
   description:
-    "Sprikle Ops (in development) gives small service businesses one accountable record for every work order, with due-date risk derived from the record.",
+    "Brindle (in development) gives small service businesses one accountable record for every work order, with due-date risk derived from the record.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

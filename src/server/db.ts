@@ -16,10 +16,10 @@ export const DATABASE_POOL_CONFIG = {
   idleTimeoutMillis: 30_000,
   statement_timeout: 10_000,
   query_timeout: 10_000,
-  application_name: "sprikle-ops",
+  application_name: "brindle",
 } as const;
 
-const globalForPrisma = globalThis as unknown as { sprikleOpsPrisma?: PrismaClient };
+const globalForPrisma = globalThis as unknown as { brindlePrisma?: PrismaClient };
 
 function createPrismaClient(): PrismaClient {
   const { DATABASE_URL } = getEnv();
@@ -32,6 +32,6 @@ function createPrismaClient(): PrismaClient {
  * database; cached on globalThis so development hot reloads do not open new pools.
  */
 export function getDb(): PrismaClient {
-  globalForPrisma.sprikleOpsPrisma ??= createPrismaClient();
-  return globalForPrisma.sprikleOpsPrisma;
+  globalForPrisma.brindlePrisma ??= createPrismaClient();
+  return globalForPrisma.brindlePrisma;
 }

@@ -1,5 +1,5 @@
 /**
- * The Sprikle Ops mark: two job rows crossed by the orange "today" line; the top row runs past it
+ * The Brindle mark: two job rows crossed by the orange "today" line; the top row runs past it
  * (overdue). Decorative; the wordmark text carries the name.
  */
 export function BrandMark({
@@ -53,7 +53,7 @@ export function Wordmark({
       <span
         className={`font-display text-wordmark font-bold tracking-heading ${onDark ? "text-white" : "text-ink"}`}
       >
-        Sprikle Ops
+        Brindle
       </span>
     </span>
   );

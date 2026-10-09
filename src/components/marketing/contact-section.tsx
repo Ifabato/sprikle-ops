@@ -17,8 +17,7 @@ export function ContactSection() {
             Want to see it on your own work?
           </h2>
           <p className="text-body text-rail-muted">
-            Sprikle Ops is in development. Demo requests open once contact details are published
-            here.
+            Brindle is in development. Demo requests open once contact details are published here.
           </p>
         </div>
         <div className="flex flex-col items-start gap-3">

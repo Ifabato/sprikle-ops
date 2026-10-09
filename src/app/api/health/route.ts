@@ -26,7 +26,7 @@ export async function GET(): Promise<Response> {
   return Response.json(
     {
       status: healthy ? "ok" : "error",
-      service: "sprikle-ops",
+      service: "brindle",
       time,
       checks: { config, database },
     },

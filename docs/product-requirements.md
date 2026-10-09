@@ -1,4 +1,7 @@
-# Product Requirements — Sprikle Ops MVP
+# Product Requirements — Brindle MVP
+
+Brindle was specified under the working name "Sprikle Ops"; see
+[legacy-identifiers.md](legacy-identifiers.md).
 
 Status: **Approved** (planning package, 2026-10-05). Source of truth for scope; changes are recorded in
 [implementation-log.md](implementation-log.md) and, when architectural, in [decisions/](decisions/).

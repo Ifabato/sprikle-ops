@@ -39,7 +39,7 @@ describe("GET /api/health", () => {
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(await response.json()).toEqual({
       status: "ok",
-      service: "sprikle-ops",
+      service: "brindle",
       time: FIXED_NOW.toISOString(),
       checks: { config: "ok", database: "ok" },
     });
@@ -74,7 +74,7 @@ describe("GET /api/health", () => {
     expect(response.status).toBe(503);
     expect(body).toEqual({
       status: "error",
-      service: "sprikle-ops",
+      service: "brindle",
       time: FIXED_NOW.toISOString(),
       checks: { config: "invalid", database: "skipped" },
     });

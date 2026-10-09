@@ -1,4 +1,4 @@
-// Sprikle Ops data model. See docs/data-model.md.
+// Brindle data model. See docs/data-model.md.
 // Database objects use snake_case via @map/@@map; Prisma models keep camelCase.
 // CHECK constraints and append-only triggers live in the migration SQL because
 // Prisma's schema language cannot express them.

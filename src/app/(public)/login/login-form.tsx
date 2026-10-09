@@ -14,7 +14,7 @@ const MESSAGES = {
   invalid: "Email or password is incorrect.",
   rateLimited: "Too many sign-in attempts. Try again in about a minute.",
   blocked: "This sign-in request was blocked. Reload the page and try again.",
-  unavailable: "Couldn't reach Sprikle Ops. Try again.",
+  unavailable: "Couldn't reach Brindle. Try again.",
 } as const;
 
 function messageFor(status: number): string {

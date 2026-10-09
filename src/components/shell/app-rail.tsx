@@ -19,7 +19,7 @@ export function AppRail({
       <Link
         href="/dashboard"
         className="mb-8 self-start rounded-control px-3 py-2"
-        aria-label="Sprikle Ops dashboard"
+        aria-label="Brindle dashboard"
       >
         <Wordmark onDark />
       </Link>

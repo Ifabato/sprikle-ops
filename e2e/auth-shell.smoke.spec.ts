@@ -125,7 +125,7 @@ test("login form is labeled, keyboard-ordered, and validates without a request",
   await expect(page.getByRole("link", { name: "Skip to main content" })).toBeFocused();
   await expect(page.getByRole("link", { name: "Skip to main content" })).toBeVisible();
   await page.keyboard.press("Tab");
-  await expect(page.getByRole("link", { name: "Sprikle Ops home" })).toBeFocused();
+  await expect(page.getByRole("link", { name: "Brindle home" })).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(page.getByLabel("Email")).toBeFocused();
   await page.keyboard.press("Tab");
