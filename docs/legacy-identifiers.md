@@ -22,3 +22,13 @@ Identifiers that had no stored state were renamed with the product: in-process s
 (`brindleAuth`, `brindlePrisma`), the PostgreSQL `application_name` connection label (`brindle`), the
 test-only client header (`x-brindle-test-client`), the test-process variable
 `BRINDLE_DEVELOPMENT_DATABASE_URL`, and the URL-parsing placeholder host (`brindle.invalid`).
+
+## Inventory (2026-10-09)
+
+A case-insensitive search of the release files for `sprikle` finds **173 distinct lines**, none of
+them product branding. By category: database names 92, demo and test account emails 61, database
+user 9, Compose project and volume 3, historical records 7, and naming documentation (this file,
+the former-name notes, and the Compose comment) 9. Those category tallies sum to 181 because 8
+lines belong to two categories: four CI connection-URL lines contain both a database name and the
+database user, and four rows of the table above name an identifier and are also naming
+documentation. Re-run the search after future changes rather than relying on these numbers.

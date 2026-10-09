@@ -50,9 +50,13 @@ dictionary and explainable from the stored records.
   matching records they count. The completion rate is a percentage and must explain its numerator
   and denominator; its link to the eligible cohort is **deferred** (OD-2). Not every metric has a
   working link to its records yet.
-- **Open product decisions (unresolved, not approved policy):**
-  - **OD-1:** whether admins may edit `COMPLETED` or `CANCELLED` work; to be decided in Phase 5.
-  - **OD-2:** the completion-rate cohort link requires the deferred created-date filter.
+- **Resolved product decisions (2026-10-09; see `docs/product-requirements.md`):**
+  - **OD-1:** administrators may edit completed and cancelled work (approved permission matrix and
+    AC-3); every change is recorded in the activity history; unassigning stays limited to `OPEN`
+    work; team members cannot edit any work.
+  - **OD-2:** the completion-rate card shows its numerator and denominator and has **no link** while
+    the created-date filter (Q15) remains deferred; the five count cards link to their filtered
+    lists.
 - Local portfolio demo: no public sign-up, no paid services, no external integrations.
 
 ## Brand Commitments
