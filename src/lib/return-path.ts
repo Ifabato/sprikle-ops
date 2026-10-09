@@ -40,6 +40,6 @@ export function safeReturnPath(value: unknown): string {
 }
 
 /** Login URL that returns the user to a safe path afterwards. */
-export function loginPathFor(returnTo: unknown): string {
+export function loginPathFor(returnTo: unknown): `/login?next=${string}` {
   return `/login?next=${encodeURIComponent(safeReturnPath(returnTo))}`;
 }

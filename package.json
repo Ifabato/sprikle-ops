@@ -23,6 +23,8 @@
     "test:coverage": "vitest run --project unit --coverage",
     "test:timezones": "TZ=UTC vitest run --project unit && TZ=America/New_York vitest run --project unit && TZ=Asia/Kolkata vitest run --project unit",
     "test:integration": "pnpm db:test:prepare && vitest run --project integration",
+    "test:e2e": "playwright test",
+    "test:e2e:smoke": "playwright test e2e/auth-shell.smoke.spec.ts",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm test:timezones && pnpm build",
     "check:full": "pnpm check && pnpm test:integration",
     "env:init": "node scripts/create-local-env.ts",
@@ -36,12 +38,22 @@
     "db:deploy": "prisma migrate deploy",
     "db:status": "prisma migrate status",
     "db:test:prepare": "node scripts/db-test-prepare.ts",
-    "db:seed:auth": "node scripts/seed-auth-users.ts"
+    "db:seed:auth": "node scripts/seed-auth-users.ts",
+    "db:seed:demo": "node --import ./scripts/lib/register-src-alias.ts scripts/seed-demo-data.ts",
+    "db:rotate:demo-password": "node scripts/rotate-demo-password.ts",
+    "perf:explain": "node scripts/explain-queries.ts",
+    "demo:record": "node scripts/record-demo.ts"
   },
   "dependencies": {
+    "@fontsource-variable/jetbrains-mono": "5.3.0",
+    "@fontsource-variable/schibsted-grotesk": "5.3.0",
+    "@gsap/react": "2.1.2",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
     "better-auth": "1.7.7",
+    "gsap": "3.15.0",
+    "lenis": "1.3.26",
+    "lucide-react": "1.52.0",
     "next": "16.3.8",
     "pg": "8.23.1",
     "react": "19.3.0",
@@ -49,6 +61,7 @@
     "zod": "4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "24.19.1",
     "@types/pg": "8.23.1",

@@ -1,15 +1,136 @@
 @import "tailwindcss";
 
+/*
+ * "Signal Board" (Phase 4B revision of Direction A, docs/design/visual-direction.md).
+ * Light only. Semantic tokens; components use these names, never raw hex values.
+ * Red means an error; orange means risk.
+ */
+
+/* Fonts are provided by next/font (src/app/fonts.ts) as CSS variables on <html>. */
+@theme inline {
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: var(--font-schibsted), system-ui, Arial, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, Menlo, monospace;
+}
+
 @theme {
-  --font-sans:
-    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Type scale. Display sizes are fluid; UI sizes are fixed rem. */
+  --text-display: clamp(2.75rem, 1.6rem + 3.4vw, 4.75rem);
+  --text-display--line-height: 0.98;
+  --text-display-2: clamp(2rem, 1.35rem + 2.4vw, 3.5rem);
+  --text-display-2--line-height: 1.02;
+  --text-micro: 0.6875rem; /* 11px: scale end labels, rail section label */
+  --text-caption: 0.75rem; /* 12px */
+  --text-label: 0.8125rem; /* 13px */
+  --text-table: 0.875rem; /* 14px */
+  --text-body: 1rem; /* 16px */
+  --text-lead: 1.1875rem; /* 19px */
+  --text-lead--line-height: 1.55;
+  --text-wordmark: 1.3125rem; /* 21px */
+  --text-wordmark--line-height: 1;
+  --text-h3: 1.25rem; /* 20px */
+  --text-h3--line-height: 1.3;
+  --text-h2: 1.625rem; /* 26px */
+  --text-h2--line-height: 1.2;
+  --text-h1: 2.25rem; /* 36px */
+  --text-h1--line-height: 1.08;
+
+  --tracking-display: -0.035em;
+  --tracking-heading: -0.02em;
+  --tracking-mono: 0.02em;
+
+  /* Surfaces and text */
+  --color-surface-page: #f4f6f8;
+  --color-surface: #ffffff;
+  --color-surface-sunken: #eef1f4;
+  --color-ink: #13283d;
+  --color-ink-secondary: #4a5a6a;
+  --color-line: #d5dce3;
+  --color-line-strong: #b9c4cf;
+  --color-line-control: #7a8896;
+
+  /* Navy frame (rail, bands, sign-in panel) */
+  --color-rail: #13283d;
+  --color-rail-deep: #0f2236;
+  --color-rail-active: #1f3b57;
+  --color-rail-line: #2a4561;
+  --color-rail-text: #e8eef4;
+  --color-rail-muted: #9fb3c8;
+
+  /* Actions and focus */
+  --color-action: #13283d;
+  --color-action-hover: #1f3b57;
+  --color-focus-ring: #1d5fb8;
+  --color-focus-ring-on-rail: #8dbbff;
+
+  /* Signal: risk and the current-location marker. Text uses signal-ink (on light) or
+     signal-on-rail (on navy); the base orange is for marks and fills only (3.58:1). */
+  --color-signal: #e8590c;
+  --color-signal-ink: #b4420b;
+  --color-signal-on-rail: #ff8a3d;
+  --color-signal-tint: #fff1e8;
+
+  /* Errors and other feedback */
+  --color-danger: #b42318;
+  --color-danger-tint: #fef0ee;
+  --color-warning: #a64b00;
+  --color-warning-tint: #fff6e5;
+  --color-success: #066a42;
+  --color-success-tint: #e8f7ee;
+
+  /* Status pairs (sample board; work-order lists later) */
+  --color-status-open: #3f4d5c;
+  --color-status-open-tint: #eef1f4;
+  --color-status-progress: #1849a9;
+  --color-status-progress-tint: #eaf1fd;
+  --color-status-blocked: #8a3a0a;
+  --color-status-blocked-tint: #fef3e2;
+  --color-status-completed: #066a42;
+  --color-status-completed-tint: #e8f7ee;
+  --color-status-cancelled: #5a6573;
+  --color-status-cancelled-tint: #f2f4f7;
+
+  /* Shape */
+  --radius-control: 4px;
+  --radius-panel: 6px;
+  --radius-sheet: 10px;
+
+  /* Depth: one soft shadow, for sheets that sit on a field */
+  --shadow-sheet: 0 1px 2px rgb(15 34 54 / 0.06), 0 12px 32px -12px rgb(15 34 54 / 0.18);
 }
 
 :root {
   color-scheme: light;
 }
 
+body {
+  background-color: var(--color-surface-page);
+  color: var(--color-ink);
+  caret-color: var(--color-focus-ring);
+  accent-color: var(--color-action);
+}
+
+/* Visible focus everywhere; lighter ring on navy. */
 :focus-visible {
-  outline: 2px solid var(--color-blue-600);
+  outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
+}
+
+.on-rail :focus-visible {
+  outline-color: var(--color-focus-ring-on-rail);
+}
+
+::selection {
+  background-color: color-mix(in srgb, var(--color-focus-ring) 20%, white);
+  color: var(--color-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

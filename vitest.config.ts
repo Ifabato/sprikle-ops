@@ -8,8 +8,9 @@ export default defineConfig({
     // Coverage is measured for the database-free unit project (`pnpm test:coverage`).
     coverage: {
       provider: "v8",
-      // Every domain/validation source file is reported, including files no test imports.
-      include: ["src/domain/**/*.ts", "src/validation/**/*.ts"],
+      // Every domain/validation source file is reported, including files no test imports, plus the
+      // browser session-keepalive decision logic (Phase 4B).
+      include: ["src/domain/**/*.ts", "src/validation/**/*.ts", "src/lib/session-monitor.ts"],
       reporter: ["text", "json-summary"],
       reportsDirectory: "coverage",
       thresholds: {
@@ -17,6 +18,7 @@ export default defineConfig({
         "src/domain/transitions.ts": { branches: 95 },
         "src/domain/permissions.ts": { branches: 95 },
         "src/validation/**/*.ts": { lines: 90, statements: 90 },
+        "src/lib/session-monitor.ts": { lines: 95, statements: 95, functions: 95, branches: 95 },
       },
     },
     projects: [

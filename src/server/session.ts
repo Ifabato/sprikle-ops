@@ -1,13 +1,9 @@
-import type { Route } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ROLES, type Role } from "@/domain/enums";
 import { authenticatedActor, type Actor } from "@/domain/permissions";
 import { loginPathFor } from "@/lib/return-path";
 import { getAuth, type Auth } from "@/server/auth";
-
-// The /login page arrives in Phase 4B, so typed routes cannot verify it yet.
-const loginRoute = (returnTo: string) => loginPathFor(returnTo) as Route;
 
 // Server-side session verification. This is the security boundary for pages and server entry
 // points; any proxy redirect is only a routing convenience (Phase 4B).
@@ -80,7 +76,7 @@ export async function authorize(
 export async function requireUser(returnTo: string): Promise<Actor> {
   const result = await authorize(await headers());
   if (!result.ok) {
-    redirect(loginRoute(returnTo));
+    redirect(loginPathFor(returnTo));
   }
   return result.actor;
 }
@@ -96,7 +92,7 @@ export async function requireRole(
   const result = await authorize(await headers(), { role });
   if (!result.ok) {
     if (result.reason === "UNAUTHENTICATED") {
-      redirect(loginRoute(returnTo));
+      redirect(loginPathFor(returnTo));
     }
     return { forbidden: true };
   }
