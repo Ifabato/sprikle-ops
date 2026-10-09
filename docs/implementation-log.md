@@ -4,23 +4,23 @@ Running checklist and verification record. Each phase is implemented only after 
 
 ## Phase checklist
 
-| #   | Phase                                           | Status                           |
-| --- | ----------------------------------------------- | -------------------------------- |
-| 0   | Planning package                                | ✅ Approved 2026-10-05           |
-| 1   | Foundation                                      | ✅ Committed `a58aa3d`, pushed   |
-| 2   | Database (Compose, Prisma, schema, constraints) | ✅ Committed `6957fc6`, pushed   |
-| 3   | Domain logic and validation                     | ✅ Committed `b4d6f80`, pushed   |
-| —   | Design setup gate (Impeccable, ADR 0004)        | ✅ Committed `856b248`, pushed   |
-| 4A  | Authentication backend                          | ✅ Implemented — awaiting review |
-| 4B  | Styled app shell, browser checks, Impeccable    | ⏳ Not started                   |
-| 5   | Services, audit trail, seed                     | ⏳ Not started                   |
-| 6   | REST API                                        | ⏳ Not started                   |
-| 7   | CI quality gates                                | ⏳ Not started                   |
-| 8   | Work-order UI                                   | ⏳ Not started                   |
-| 9   | Dashboard                                       | ⏳ Not started                   |
-| 10  | Analytics                                       | ⏳ Not started                   |
-| 11  | E2E and accessibility                           | ⏳ Not started                   |
-| 12  | Documentation and packaging                     | ⏳ Not started                   |
+| #   | Phase                                           | Status                                          |
+| --- | ----------------------------------------------- | ----------------------------------------------- |
+| 0   | Planning package                                | ✅ Approved 2026-10-05                          |
+| 1   | Foundation                                      | ✅ Committed `a58aa3d`, pushed                  |
+| 2   | Database (Compose, Prisma, schema, constraints) | ✅ Committed `6957fc6`, pushed                  |
+| 3   | Domain logic and validation                     | ✅ Committed `b4d6f80`, pushed                  |
+| —   | Design setup gate (Impeccable, ADR 0004)        | ✅ Committed `856b248`, pushed                  |
+| 4A  | Authentication backend                          | ✅ Committed `b141ad4`, pushed                  |
+| 4B  | Styled app shell, browser checks, Impeccable    | ✅ Implemented — awaiting review                |
+| 5   | Services, audit trail, seed                     | ✅ Implemented — awaiting review                |
+| 6   | REST API                                        | ✅ Implemented — awaiting review                |
+| 7   | CI quality gates                                | 🟡 Workflow written — not yet run on GitHub     |
+| 8   | Work-order UI                                   | ✅ Implemented — awaiting review                |
+| 9   | Dashboard                                       | ✅ Implemented — awaiting review                |
+| 10  | Analytics                                       | ✅ Implemented — awaiting review                |
+| 11  | E2E and accessibility                           | ✅ Implemented (axe deferred) — awaiting review |
+| 12  | Documentation and packaging                     | ✅ Implemented — awaiting review                |
 
 ## Approved decisions
 
@@ -434,3 +434,255 @@ server-side checked entry point; a session response or cookie alone is not autho
 
 Deferred (not done): a test for expired-row deletion, file-backed verification reruns, Better
 Auth's deferred-refresh option, and removal of two non-sensitive Phase 2 logs in `/tmp`.
+
+## Phase 4B — Styled app shell, browser checks, Impeccable (2026-10-06)
+
+### Scope delivered
+
+- Direction A tokens in `src/app/globals.css` (system fonts, light only, themed selection, caret,
+  and accent color), a skip-to-content link, and shared UI primitives (`src/components/ui/`).
+- Login (`src/app/(public)/login/`): labeled fields with `email`/`current-password` autocomplete,
+  required marked in text, inline field errors, a focused error summary, a pending state, and
+  generic failure, 403, 429, and network messages; the password is cleared after a failure.
+- App shell (`src/app/(app)/layout.tsx`, `src/components/shell/`): 240px navy rail on desktop; a
+  mobile top bar whose menu expands in place (Escape and navigation close it; hidden links are not
+  rendered, so they are never focusable); role-aware navigation (Analytics admin-only); user panel
+  with a read-only profile link and sign-out that reports real failures.
+- Pages: honest "not available in this build yet" placeholders for Dashboard, Work orders, and
+  Analytics; a read-only profile; the team-member forbidden view under the Analytics header; loading,
+  error (reference code, or fallback wording when no digest exists), and not-found states.
+- `src/proxy.ts`: optimistic redirect for cookieless requests only.
+- Visible-tab session keepalive (`src/lib/session-monitor.ts`,
+  `src/components/shell/session-keepalive.tsx`); see `docs/authorization.md`.
+- Browser smoke suite (`playwright.config.ts`, `e2e/`, `scripts/e2e-test-data.ts`,
+  `pnpm test:e2e:smoke`); see `docs/test-strategy.md`.
+- Impeccable: two manual engine calls, fresh reviewer and documenter subagents, one polish round,
+  `DESIGN.md`; recorded in ADR 0004.
+
+No operational features, metrics, tables, or sample data. No new migrations; development demo
+users unchanged. OD-1 and OD-2 remain unresolved.
+
+### Dependencies
+
+- `lucide-react@1.52.0` (ISC; React peer `^19` satisfied) and `@playwright/test@1.63.0` (dev;
+  Node ≥ 20), exact pins; neither has install scripts.
+- Chromium headless shell 153.0.8010.12 (Playwright revision 1243) via
+  `pnpm exec playwright install --only-shell chromium` into `~/Library/Caches/ms-playwright/`
+  (Playwright also fetched its FFmpeg build, revision 1011, 2.5 MB, which it bundles with that
+  command).
+
+### Verification results
+
+| Check                           | Result                                                                                                |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `pnpm check`                    | ✅ format, lint (0 warnings), typecheck, 507 unit tests (23 files), coverage, 3 time-zone runs, build |
+| Coverage                        | ✅ 99.35% statements, 98.91% branches, 99.33% lines; `session-monitor.ts` included at 100%            |
+| `pnpm test:integration`         | ✅ 4 files, 45 tests                                                                                  |
+| Build with the database stopped | ✅ exit 0; database restarted (in a trap) and healthy                                                 |
+| `pnpm test:e2e:smoke`           | ✅ 13 tests, production build on `127.0.0.1:3100`, `sprikle_ops_test`                                 |
+| Impeccable `detect --json`      | ✅ no findings                                                                                        |
+| Finish review / verdict         | ⚠️ `disposition: fix` after one bounded round (R1, R2 open; see ADR 0004)                             |
+| Development data                | ✅ users, accounts, sessions, work orders, and a fingerprint of user rows identical before and after  |
+| Processes and ports             | ✅ nothing left on 3000 or 3100; no Next.js, Playwright, or browser processes remain                  |
+| Migrations                      | ✅ none added; `db:status` up to date                                                                 |
+
+Desktop (1440×900) and mobile (390×844) screenshots of login (default, missing fields, error),
+dashboard, open mobile menu, profile, forbidden, and not-found were inspected before and after
+polish (`.impeccable/review/`, ignored).
+
+### Issues and deviations
+
+- **Route cast removed (type-only 4A change):** `loginPathFor` now declares the return type
+  `` `/login?next=${string}` `` so typed routes accept the redirect without a cast. The returned
+  string is unchanged. The login page keeps one documented cast for the sanitized `next` path,
+  which typed routes cannot verify.
+- **`getCurrentUser` (new, `src/server/current-user.ts`):** display data for the shell and profile,
+  derived with the 4A `actorFromSession` and a `disableRefresh` read; it does not authorize.
+- **Lint exception:** one scoped `no-location-assign-relative-destination` disable in sign-out; a
+  full page load deliberately discards the client router cache holding signed-in pages.
+- **Password in failure artifacts:** a probe confirmed Playwright's failure `error-context.md`
+  snapshots include input values. The password is random per run, and global teardown redacts it
+  from text artifacts under `test-results/e2e`. Not guaranteed if the runner is killed.
+- **Per-run random E2E password** instead of the fixed test password in the checklist, so nothing
+  reusable exists after a run.
+- **Locator fixes during the first runs:** Next.js's route announcer also has `role="alert"`; text
+  matching needed `exact`. Test-only changes.
+- **Benign server log:** one run logged "The destination stream closed early" when a test closed
+  its browser context during a streamed response; not seen in the final run.
+- **Engine directives not followed** (interview probe, decision page, extra subagents) and the
+  skipped detector browser overlay: see ADR 0004.
+- **Documenter accuracy fix:** `DESIGN.md` claimed every interactive element is ≥ 44px; the skip
+  link and wordmark links are not, so the wording was narrowed to controls with that exception
+  named. `DESIGN.md` is excluded from Prettier as documenter-managed.
+- **Error reference uses `font-mono`;** the documenter left it out of the type system (not repaired).
+- **Open for decision:** R1 and R2 from the verdict pass; `design.json` Git exception.
+
+## Phase 4B visual revision — Signal Board, landing page, credential rotation (2026-10-06 to 2026-10-09)
+
+After the first 4B interface was reviewed in the browser and judged too plain, the user approved a
+revision (Concept A "Signal Board") without new operational features. Auth, authorization, session
+configuration, safe return paths, test isolation, and domain behavior are unchanged.
+
+### Scope delivered
+
+- **Public landing page at `/`** (static, reads no session): heavy display headline; a working
+  sample board whose day ruler re-derives due labels and re-sorts rows with the real
+  `src/domain` due-date rules (all rows labeled sample data; FLIP re-sort skipped under reduced
+  motion); the workflow as one job's append-only activity trail on a navy band; three principles
+  each paired with a sample record; a contact band; footer. Honest "In development" status.
+- **Contact:** configurable in `src/config/contact.ts` (validated `mailto:`/`https:` only). No
+  destination has been supplied, so the page shows non-clickable "Contact details coming soon"; no
+  form, no link. Not complete until the owner supplies a destination.
+- **Split-screen sign-in** (navy brand panel with a compact sample board; navy band on phones) and
+  a **coordinated app shell**: new mark and wordmark, orange current marker, initials avatar,
+  heavier page titles, open-layout placeholder states listing what is planned (from
+  `docs/information-architecture.md`), ruled profile list, revised error/forbidden/not-found.
+- **Design system:** self-hosted Schibsted Grotesk and JetBrains Mono via `next/font/local`;
+  navy actions; safety orange reserved for risk and the current/today marker (text uses
+  `signal-ink`, 5.64:1); red only for errors; light only.
+- **Demo-password rotation** (`pnpm db:rotate:demo-password`, `scripts/rotate-demo-password.ts`,
+  `scripts/lib/rotate-demo-password.ts`), documented in the README.
+- `/` was removed from the old redirect (`src/app/page.tsx` deleted).
+
+### Dependencies
+
+`@fontsource-variable/schibsted-grotesk@5.3.0` and `@fontsource-variable/jetbrains-mono@5.3.0`
+(exact pins; OFL-1.1; no install scripts or dependencies; latin variable woff2 48 KB and 40 KB,
+served from the app's own origin).
+
+### Credential rotation (run once, 2026-10-06)
+
+- Output (no values): 4 demo accounts updated; 0 demo-user sessions existed to sign out; the new
+  password in `.env` verifies; the old password is rejected; no staged file left; `.env` remains
+  owner-only and every other line is byte-identical. User rows and account identities match the
+  pre-rotation fingerprint; only credential hashes changed. The test database was not touched.
+- Rechecked read-only on 2026-10-09 after the interruption: the `.env` password verifies against
+  all 4 demo accounts; no staged file exists. The rotation was not run again.
+- Failure handling tested (integration, against `sprikle_ops_test`): rename failure after commit
+  keeps the owner-only staged file and reports `mv .env.rotate-staged .env`; database failure
+  changes nothing; a second run refuses while a staged file exists; wrong database refused.
+
+### Impeccable and review
+
+Engine calls (plugin disabled, pinned binary, both opt-outs, hash checked each time): `context`
+(landing), `surface-brief write` ×2, `detect --json` ×1 (3 off-ramp font-size findings, fixed with
+type tokens). One fresh reviewer covered finish quality and anti-generic critique:
+`disposition: fix` (8 fixes) → polish round 1 → verdict `fix` (6 resolved, 2 partial,
+2 regressions) → polish round 2 → final verdict **`disposition: ship`**. The documenter
+regenerated `DESIGN.md` and the ignored `.impeccable/design.json` from the final build. Details in
+ADR 0004.
+
+**Known cosmetic nit (not fixed, by decision):** on phones, the "→" in the first principle example
+wraps onto its own line before the "Overdue 1 day" chip.
+
+### Verification results (final code)
+
+| Check                           | Result                                                                                      |
+| ------------------------------- | ------------------------------------------------------------------------------------------- |
+| `pnpm check`                    | ✅ format, lint (0 warnings), typecheck, 527 unit tests (26 files), 3 time-zone runs, build |
+| Coverage                        | ✅ 99.35% statements, 98.91% branches, 100% functions, 99.33% lines                         |
+| `pnpm test:integration`         | ✅ 5 files, 49 tests                                                                        |
+| Build with the database stopped | ✅ exit 0; database restarted in a trap, healthy, schema up to date                         |
+| `pnpm test:e2e:smoke`           | ✅ 16 tests (production build, `127.0.0.1:3100`, `sprikle_ops_test`)                        |
+| Secret scan                     | ✅ no `.env` secret value in any tracked/untracked file, test result, or screenshot         |
+| Development data                | ✅ 4 users / 4 accounts / 0 sessions / 0 work orders; user rows unchanged                   |
+
+### Issues and deviations
+
+- **Interrupted session:** the computer slept before the documenter ran. On resumption the state
+  was inspected first; only the documenter, `pnpm check`, integration, database-off build, browser
+  suite, and docs were completed. No engine call or rotation was repeated.
+- **Prettier on a docs table** failed the first resumed `pnpm check`; the ADR file was formatted and
+  the full check rerun.
+- **Accidental index change:** a `git rm --cached` staged the deletion of `src/app/page.tsx`; it was
+  unstaged immediately (`git restore --staged`). Nothing is staged.
+- **A brief write failed in the shell** (unsplit command variable) before reaching the engine and was
+  rerun once correctly.
+- **Reduced-motion test** counts only scripted animations; CSS transitions are reduced globally.
+- **Next.js 16.3 `next dev` wrote untracked `AGENTS.md` and `CLAUDE.md`** on first start (left
+  untouched for the pre-commit review).
+
+## Phases 5–12 — Complete product slices (2026-10-09)
+
+Scope: the approved MVP workflows end to end (services and audit trail, REST API, work-order UI,
+dashboard, analytics, browser journeys, CI workflow, documentation). No new migrations, no new
+dependencies, no changes to authentication, credentials, or sessions. Design frozen on the existing
+app shell; Brindle prototypes left in place but served only by `next dev`.
+
+### Decisions
+
+- **OD-1 resolved:** administrators may edit completed and cancelled work (approved permission
+  matrix and AC-3 have no status restriction; every edit is audited). No behavior change.
+- **OD-2 resolved:** the completion-rate card has no link while the created-date filter (Q15) stays
+  deferred; the rate shows its numerator and denominator.
+- **Rule-code HTTP mapping (Phase 6):** field-level rule failures → `400 VALIDATION_ERROR` with
+  `fieldErrors`; `ASSIGNEE_REQUIRED`, `UNASSIGN_NOT_ALLOWED` → 422; `VERSION_CONFLICT` → `409
+CONFLICT`; `VERSION_LIMIT` → 409; `CLOCK_SKEW` → 500 ([api.md](api.md)).
+- **CSRF for `/api/v1`:** cross-site `Sec-Fetch-Site` or foreign `Origin` → 403; JSON-only bodies
+  (32 KB cap).
+- **Real 404s:** streaming `loading.tsx` boundaries were moved off the work-order detail/edit routes
+  (the list moved into a `(list)` route group) so out-of-scope work returns HTTP 404, not a streamed
+  soft 404.
+- **Transactions only write:** Prisma resolves `include` with concurrent queries, which a single
+  transaction connection must not run (`pg` deprecation warning); results are read after commit.
+- **Demo seed through services:** `pnpm db:seed:demo` creates history at historical timestamps via
+  the same services as the UI (Node built-in type stripping plus a small `@/` resolve hook, no new
+  dependency); it refuses to run when any work order exists.
+
+### Defects found by the new tests and fixed
+
+- Out-of-scope work-order pages returned HTTP 200 with the not-found view (streaming); now 404.
+- Block/cancel dialogs and the comment form used native validation tooltips; now `noValidate` with
+  announced inline errors.
+- Analytics query schema threw on an invalid `from` date during the range refinement.
+- Demo data lacked an active, non-overdue High-priority job; the dataset was corrected.
+- Display numbers rendered "37 . 5%" because of tabular figures in the display face.
+- Overdue labels used Error Red instead of the documented Signal Ink with an orange flag (DESIGN.md);
+  due labels now follow the token rules and are set in mono.
+- Required selects/dates showed "Invalid identifier." / format errors when empty; now "… is required."
+
+### Verification (final candidate)
+
+| Command                 | Result                                                                                                                                                                                                                                                  |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm check`            | ✅ exit 0: Prettier clean; ESLint 0 warnings; typecheck clean; 28 files / 538 unit tests ×4 runs (coverage + UTC, New York, Kolkata); coverage 99.36% statements, 98.96% branches, 100% functions, 99.34% lines (thresholds enforced); production build |
+| `pnpm test:integration` | ✅ exit 0: 9 files, 101 tests (21.5 s), no warnings                                                                                                                                                                                                     |
+| `pnpm test:e2e`         | ✅ exit 0: 27 tests (16 smoke + 11 journeys), 2.5 min, production build on 127.0.0.1:3100                                                                                                                                                               |
+| `pnpm perf:explain`     | ✅ 9 query shapes index-supported on 5,000 rows ([performance.md](performance.md))                                                                                                                                                                      |
+| Secret scan             | ✅ 241 tracked/untracked files: only synthetic fixtures; `.env` ignored and untracked                                                                                                                                                                   |
+| `pnpm audit`            | ⚠️ 3 high, 1 moderate, all in development tooling (Prisma CLI → `mysql2`, `deepmerge-ts`; ESLint plugin → `braces`)                                                                                                                                     |
+
+### Data and processes
+
+- Development database: demo seed added 37 work orders and 102 activity entries; three walkthrough
+  recordings each added one "Demo: replace lobby door closer" work order (WO-000038 to WO-000040;
+  the first was a development-server take, the later ones production builds).
+  No user, credential, or existing row was changed or deleted.
+- Test database: truncated by the suites' own teardown (0 work orders after the run).
+- Impeccable Live: helper stopped, injection removed, prototype layout byte-identical to its
+  pre-Live snapshot; no accepted variants.
+
+## Release closeout (2026-10-09)
+
+- **Prototypes:** the four rejected concepts, the prototype index, and the comparison switcher were
+  removed after checking imports (nothing outside `src/app/prototypes/` used them). Only the Brindle
+  design experiment remains, documented in `src/app/prototypes/README.md`, still 404 in production;
+  its sample data moved to `brindle/sample.ts`. `gsap`, `@gsap/react`, and `lenis` are kept for it.
+- **Repository contents:** `.gitignore` now tracks only `.claude/skills/` (vendored, with `LICENSE`
+  and `SOURCE.md`); `AGENTS.md`/`CLAUDE.md` contain only the Next.js 16 agent instructions. Media
+  (`docs/media/demo-walkthrough.webm`, four `docs/screenshots/*.png`) were inspected frame by frame
+  and for embedded metadata: synthetic demo data only, no credentials, emails, local paths, or
+  development overlay.
+- **Advisories:** four `pnpm audit` findings documented with exposure and options in
+  [security-advisories.md](security-advisories.md); no overrides added.
+- **Clean-checkout verification:** the 232 proposed release files (tracked plus untracked, nothing
+  ignored) were copied to a temporary directory and set up exactly as the README describes, with a
+  disposable Compose project (`sprikle-ops-verify`, port 5433) and generated credentials that were
+  never printed: `pnpm install --frozen-lockfile` ✅, `pnpm env:init` ✅, `pnpm db:up` ✅,
+  `pnpm db:migrate` ✅ (3 migrations), `pnpm db:seed:auth` ✅, `pnpm db:seed:demo` ✅ (37 work orders,
+  102 activities), `pnpm dev` + seeded-admin sign-in and API reads ✅, `pnpm check` ✅ (538 unit tests
+  ×4, coverage 99.36% statements / 98.96% branches, build), `pnpm test:integration` ✅ (101),
+  `pnpm test:e2e` ✅ (27). The disposable stack and its volume were then removed; the development
+  database was not touched.
+- **README fix from that run:** documented what to change when port 5432 or 3000 is taken, and the
+  Compose project name for a second checkout.

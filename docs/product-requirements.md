@@ -106,15 +106,17 @@ time-in-status analytics, keyset pagination, deployment.
 | Q16 | Admin quick close (`OPEN → COMPLETED`) requires an existing assignee.                                                                                          |
 | Q17 | Team members acting on work not currently assigned to them always receive `NOT_FOUND`.                                                                         |
 
-### Open product decisions
+### Resolved product decisions (2026-10-09)
 
-- **OD-1 — Editing `COMPLETED` or `CANCELLED` work.** Whether admins may edit completed or cancelled
-  work is **unresolved and will be decided in Phase 5**. The current pure rules
-  (`src/domain/work-order-edit.ts`) allow these edits, with unassigning restricted to `OPEN` work.
-  This behavior is **not an approved permanent product policy**.
-- **OD-2 — Completion-rate cohort link.** The completion-rate card's link to its eligible cohort
-  requires the deferred created-date filter (Q15). Do not implement the link or the filter until
-  that dependency is resolved in an approved phase (see [metrics.md](metrics.md)).
+- **OD-1 — Editing `COMPLETED` or `CANCELLED` work.** Resolved from the approved permission matrix
+  and AC-3, which grant administrators detail edits and reassignment with no status restriction:
+  administrators may edit completed and cancelled work; every change is recorded in the activity
+  history; unassigning stays limited to `OPEN` work. Team members still cannot edit any work.
+  (Covered by `tests/integration/work-order-services.test.ts`.)
+- **OD-2 — Completion-rate cohort link.** Resolved from AC-8 and Q15: the completion-rate card shows
+  the percentage with its numerator and denominator explained on the card and in its definition,
+  and has **no link** while the created-date filter remains deferred. The five count cards link to
+  their filtered lists.
 
 ## 6. Non-functional requirements
 

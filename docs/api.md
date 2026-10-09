@@ -1,6 +1,7 @@
 # Routes and API
 
-Status: **Approved design.** Implemented so far: `GET /api/health` (configuration and database checks, Phase 2).
+Status: **Implemented.** Every endpoint below exists and is covered by integration tests
+(`tests/integration/api-work-orders.test.ts`) and the browser journeys (`e2e/`).
 
 ## Layering
 
@@ -15,22 +16,25 @@ Business rules live only in `src/domain/` (pure) and `src/server/services/` (I/O
 
 ## Endpoints
 
-| Method and path                             | Access            | Input → Output                                                                                                                                                                              | Phase               |
-| ------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| `GET /api/health`                           | public            | → `{status, service, time, checks}`; `503` when unhealthy                                                                                                                                   | 1 (config), 2 (+db) |
-| `/api/auth/[...all]`                        | public            | Better Auth handler                                                                                                                                                                         | 4                   |
-| `GET /api/v1/work-orders`                   | signed in, scoped | query `page, pageSize≤50, q, status[], priority[], assignee (id\|me\|unassigned), serviceAreaId, due (overdue\|today\|week), sort, order` → `{data, page:{page,pageSize,total,totalPages}}` | 6                   |
-| `POST /api/v1/work-orders`                  | `ADMIN`           | `CreateWorkOrderInput` → `201 {data}`                                                                                                                                                       | 6                   |
-| `GET /api/v1/work-orders/:ref`              | scoped            | → `{data}` with assignee, creator, service area                                                                                                                                             | 6                   |
-| `PATCH /api/v1/work-orders/:ref`            | `ADMIN`           | `{version, …fields}` → `{data}` (status not accepted here)                                                                                                                                  | 6                   |
-| `POST /api/v1/work-orders/:ref/transitions` | per matrix        | `{version, toStatus, note?}` → `{data}`                                                                                                                                                     | 6                   |
-| `GET /api/v1/work-orders/:ref/comments`     | scoped            | → `{data: Comment[]}`                                                                                                                                                                       | 6                   |
-| `POST /api/v1/work-orders/:ref/comments`    | scoped            | `{body}` → `201 {data}`                                                                                                                                                                     | 6                   |
-| `GET /api/v1/work-orders/:ref/activity`     | scoped            | → `{data: Activity[]}`                                                                                                                                                                      | 6                   |
-| `GET /api/v1/metrics/dashboard`             | signed in, scoped | → KPIs, Needs Attention, recent activity, `asOf`                                                                                                                                            | 9                   |
-| `GET /api/v1/metrics/analytics?from&to`     | `ADMIN`           | → metrics in [metrics.md](metrics.md)                                                                                                                                                       | 10                  |
-| `GET /api/v1/assignees`                     | `ADMIN`           | → active users for assignment                                                                                                                                                               | 6                   |
-| `GET /api/v1/service-areas`                 | signed in         | → active service areas                                                                                                                                                                      | 6                   |
+| Method and path                                | Access            | Input → Output                                                                                                                                                                              | Phase               |
+| ---------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| `GET /api/health`                              | public            | → `{status, service, time, checks}`; `503` when unhealthy                                                                                                                                   | 1 (config), 2 (+db) |
+| `/api/auth/[...all]`                           | public            | Better Auth handler                                                                                                                                                                         | 4                   |
+| `GET /api/v1/work-orders`                      | signed in, scoped | query `page, pageSize≤50, q, status[], priority[], assignee (id\|me\|unassigned), serviceAreaId, due (overdue\|today\|week), sort, order` → `{data, page:{page,pageSize,total,totalPages}}` | 6                   |
+| `POST /api/v1/work-orders`                     | `ADMIN`           | `CreateWorkOrderInput` → `201 {data}`                                                                                                                                                       | 6                   |
+| `GET /api/v1/work-orders/:ref`                 | scoped            | → `{data}` with assignee, creator, service area                                                                                                                                             | 6                   |
+| `PATCH /api/v1/work-orders/:ref`               | `ADMIN`           | `{version, …fields}` → `{data}` (status not accepted here)                                                                                                                                  | 6                   |
+| `POST /api/v1/work-orders/:ref/transitions`    | per matrix        | `{version, toStatus, note?}` → `{data}`                                                                                                                                                     | 6                   |
+| `GET /api/v1/work-orders/:ref/comments`        | scoped            | → `{data: Comment[]}`                                                                                                                                                                       | 6                   |
+| `POST /api/v1/work-orders/:ref/comments`       | scoped            | `{body}` → `201 {data}`                                                                                                                                                                     | 6                   |
+| `GET /api/v1/work-orders/:ref/activity`        | scoped            | → `{data: Activity[]}`                                                                                                                                                                      | 6                   |
+| `GET /api/v1/metrics/dashboard`                | signed in, scoped | → KPIs, Needs Attention, recent activity, `asOf`                                                                                                                                            | 9                   |
+| `GET /api/v1/metrics/analytics?from&to&window` | `ADMIN`           | `from`/`to` (YYYY-MM-DD, New York days, both or neither; creation range for work by status), `window` 7/30/90 → metrics in [metrics.md](metrics.md)                                         | 10                  |
+| `GET /api/v1/assignees`                        | `ADMIN`           | → active users for assignment                                                                                                                                                               | 6                   |
+| `GET /api/v1/service-areas`                    | signed in         | → active service areas                                                                                                                                                                      | 6                   |
+
+`PATCH` returns `{ data, meta: { changed } }`; `changed: false` means the submitted values equal the
+stored ones and nothing was written (no version increment, no activity).
 
 Status changes use a separate command endpoint (`/transitions`) rather than a PATCH field so the
 state machine is explicit and every change produces exactly one `STATUS_CHANGED` activity. There is
@@ -39,6 +43,15 @@ no DELETE endpoint.
 ## Conventions
 
 - JSON bodies, camelCase keys, ISO-8601 UTC timestamps (`…Z`).
+- Every `/api/v1` response carries `x-request-id` and `Cache-Control: no-store`. Unexpected failures
+  return a generic `500 INTERNAL_ERROR` with the request ID; the server log records only the request
+  ID and error class.
+- **Same-origin writes (CSRF).** `POST`/`PATCH` requests are refused with `403` when
+  `Sec-Fetch-Site` is present and not `same-origin`/`none`, or when `Origin` is present and is not
+  the app's own origin. Request bodies must be `application/json` (at most 32 KB), which a
+  cross-site HTML form cannot send without a CORS preflight that this API never grants. Server
+  Actions rely on Next.js's built-in Origin/Host check.
+- Signed-out or deactivated callers receive `401` JSON (never a redirect).
 - Work orders are addressed by reference (`WO-000123`) in URLs.
 - Authenticated responses send `Cache-Control: no-store`. The health endpoint also sends `no-store`.
 
@@ -123,22 +136,28 @@ fields.
 }
 ```
 
-| Code                 | HTTP | When                                                    |
-| -------------------- | ---- | ------------------------------------------------------- |
-| `VALIDATION_ERROR`   | 400  | Zod parse failure; `fieldErrors` populated              |
-| `UNAUTHENTICATED`    | 401  | no valid session                                        |
-| `FORBIDDEN`          | 403  | role not permitted for the action                       |
-| `NOT_FOUND`          | 404  | missing, or outside the caller's scope                  |
-| `CONFLICT`           | 409  | stale `version`                                         |
-| `INVALID_TRANSITION` | 422  | status change not allowed by the matrix                 |
-| `NO_CHANGE`          | 422  | transition to the current status                        |
-| `INTERNAL_ERROR`     | 500  | unexpected; details logged server-side with `requestId` |
+| Code                   | HTTP | When                                                    |
+| ---------------------- | ---- | ------------------------------------------------------- |
+| `VALIDATION_ERROR`     | 400  | Zod parse failure; `fieldErrors` populated              |
+| `UNAUTHENTICATED`      | 401  | no valid session                                        |
+| `FORBIDDEN`            | 403  | role not permitted for the action                       |
+| `NOT_FOUND`            | 404  | missing, or outside the caller's scope                  |
+| `CONFLICT`             | 409  | stale `version`                                         |
+| `INVALID_TRANSITION`   | 422  | status change not allowed by the matrix                 |
+| `NO_CHANGE`            | 422  | transition to the current status                        |
+| `ASSIGNEE_REQUIRED`    | 422  | target status needs an assignee (D6, Q16)               |
+| `UNASSIGN_NOT_ALLOWED` | 422  | unassigning work that is not `OPEN`                     |
+| `VERSION_LIMIT`        | 409  | version counter at its maximum                          |
+| `INTERNAL_ERROR`       | 500  | unexpected; details logged server-side with `requestId` |
 
 Domain rules (Phase 3) return result codes rather than throwing: `UNAUTHENTICATED`, `NOT_FOUND`,
 `FORBIDDEN`, `VERSION_CONFLICT`, `NO_CHANGE`, `INVALID_TRANSITION`, `ASSIGNEE_REQUIRED`,
 `NOTE_REQUIRED`, `NOTE_TOO_LONG`, `CLOCK_SKEW`, `VERSION_LIMIT`, `INVALID_DUE_DATE`,
-`DUE_DATE_IN_PAST`, `UNASSIGN_NOT_ALLOWED`, `ASSIGNEE_NOT_FOUND`, `ASSIGNEE_INACTIVE`. The exact
-HTTP mapping of the rule-specific codes is decided with the route handlers in Phase 6; one mapper
-converts them to responses. Server Actions return
+`DUE_DATE_IN_PAST`, `UNASSIGN_NOT_ALLOWED`, `ASSIGNEE_NOT_FOUND`, `ASSIGNEE_INACTIVE`. One
+mapper (`src/server/services/result.ts`, `HTTP_STATUS`) converts them: field-level rule failures
+(`NOTE_REQUIRED`, `NOTE_TOO_LONG`, `INVALID_DUE_DATE`, `DUE_DATE_IN_PAST`, `ASSIGNEE_NOT_FOUND`,
+`ASSIGNEE_INACTIVE`, and an inactive service area) become `400 VALIDATION_ERROR` with
+`fieldErrors` for that field; `VERSION_CONFLICT` becomes `409 CONFLICT`; `CLOCK_SKEW` is a server
+fault (`500`). Server Actions return
 `{ ok: true, data } | { ok: false, error }` using the same codes. Stack traces and raw database
 errors are never returned to clients.

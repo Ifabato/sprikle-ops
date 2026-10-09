@@ -1,8 +1,8 @@
 # Authorization
 
-Status: **Approved design.** Pure rules implemented in Phase 3 (`src/domain/permissions.ts`,
-`src/domain/transitions.ts`, `src/domain/work-order-edit.ts`); enforced with real sessions from
-Phase 4 and in services from Phase 5.
+Status: **Implemented.** Pure rules in `src/domain/` (`permissions.ts`, `transitions.ts`,
+`work-order-edit.ts`) are enforced with real sessions in every service in `src/server/services/`,
+which every page, Server Action, and `/api/v1` handler calls.
 
 ## Principles
 
@@ -27,7 +27,7 @@ Phase 4 and in services from Phase 5.
   forbidden view with HTTP 200, because Next.js only sets a 403 page status through an experimental
   flag that is not used).
 - Every page and server entry point calls these helpers itself; layouts and the Phase 4B proxy are
-  not relied on.
+  not relied on (see "Browser layer" below).
 - Sessions are read with refresh disabled, so rendering never refreshes or extends a session and
   never sets cookies. Better Auth may delete an already-expired session row when reading it.
 - **Protected API handlers:** every protected application API route handler (and Server Action)
@@ -38,6 +38,36 @@ Phase 4 and in services from Phase 5.
 - `?next=` return paths pass through `safeReturnPath()` (`src/lib/return-path.ts`): only
   `/dashboard`, `/work-orders`, `/analytics`, `/profile` and their subpaths; anything else becomes
   `/dashboard`.
+
+## Browser layer (Phase 4B)
+
+None of these is an access boundary; the server-side guards above remain mandatory on every page.
+
+- **Public pages:** `/` (landing) and `/login` are public. The landing page is static and reads no
+  session; signed-in visitors reach the app through "Sign in", which `/login` forwards.
+- **Proxy (`src/proxy.ts`):** an optimistic redirect only. A request to a protected area with no
+  session cookie at all goes straight to `/login?next=…`. It never validates a session; a request
+  with any session cookie passes through to the page's own guard.
+- **App layout (`src/app/(app)/layout.tsx`):** reads the current user (with `actorFromSession`, so
+  inactive or malformed sessions yield nothing) only to render role-aware navigation. It does not
+  redirect; each page's guard does, which preserves that page's return path.
+- **Navigation:** Analytics is hidden from team members (`navItemsFor`); `/analytics` still denies
+  them on the server with the forbidden view.
+- **Login page:** an active, authorized session is redirected to its safe `next` path. An inactive or
+  expired session is not authorized, so the form renders instead of bouncing between login and
+  the dashboard.
+- **Visible-tab session keepalive (`src/components/shell/session-keepalive.tsx`,
+  `src/lib/session-monitor.ts`):** not inactivity detection. While the shell is mounted it calls
+  `GET /api/auth/get-session` (same origin, `cache: "no-store"`) on mount, when the tab becomes
+  visible again, and every 15 minutes while the tab is visible; checks never overlap and hidden
+  tabs make none. Because this request goes through the HTTP handler, Better Auth rolls a session
+  older than one hour forward to a fresh 8 hours (the 4A configuration is unchanged). Only a
+  confirmed signed-out answer (`null` session, `401`, or `isActive: false`) sends the user to
+  `/login?next=<current path>`; network errors, 5xx, 429, and unexpected bodies are ignored. An idle
+  but visible tab keeps the session alive; a hidden or closed tab lets it expire 8 hours after the
+  last refresh.
+- **Sign-out:** `POST /api/auth/sign-out` (same origin); the browser goes to `/login` only after the
+  server confirms, otherwise the failure is shown.
 
 ## Decision precedence
 
@@ -54,9 +84,9 @@ out-of-scope callers learn nothing about a work order:
 5. Edits only: `FORBIDDEN` (team members cannot edit or assign) precedes the version check; field
    rules (`INVALID_DUE_DATE`, `DUE_DATE_IN_PAST`, `UNASSIGN_NOT_ALLOWED`, `ASSIGNEE_NOT_FOUND`,
    `ASSIGNEE_INACTIVE`) follow; an edit with no normalized change returns "unchanged" and requests
-   no version increment; `VERSION_LIMIT` applies only to real changes. Whether terminal
-   (`COMPLETED`/`CANCELLED`) work may be edited is an **open product decision** (OD-1 in
-   [product-requirements.md](product-requirements.md)); the pure rules currently allow it.
+   no version increment; `VERSION_LIMIT` applies only to real changes. Administrators may
+   edit terminal (`COMPLETED`/`CANCELLED`) work (OD-1, resolved in
+   [product-requirements.md](product-requirements.md)).
 
 ## Permission matrix
 

@@ -7,7 +7,7 @@ Status: **Approved plan.** Pages are built in Phases 4 and 8–10; see
 
 ```
 /login                         public
-/                              → /dashboard (signed in) or /login
+/                              public landing page (static; "Sign in" → /login)
 ── App shell: top bar (user menu, sign out) + navigation
    Dashboard · Work orders · Analytics [A] · Profile
    (sidebar on desktop, disclosure menu on mobile)
